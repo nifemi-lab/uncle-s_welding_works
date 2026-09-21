@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Staff area</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.bar{background:var(--char);color:#fff;border-bottom:3px solid var(--spark)}
+.bar .in{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px}
+.bar h1{font-size:26px;color:#fff}
+.page{max-width:1040px;margin:0 auto;padding:22px 20px 60px}
+.login{max-width:400px;margin:64px auto;background:var(--paper);border:1.5px solid var(--char);border-radius:var(--radius);padding:24px}
+.login h1{font-size:36px;margin-bottom:6px}
+.fld{margin:0 0 14px}
+.err{color:var(--danger);font-weight:600;min-height:1.5em;margin:0 0 8px}
+.demo{background:#fff3cd;color:#5c4400;padding:10px 14px;border-radius:var(--radius);font-size:15px;margin-bottom:16px}
+.tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+.counts{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:16px}
+.count{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius);padding:12px 14px;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.count b{display:block;font-family:var(--font-head);font-size:38px;line-height:1}
+.count span{font-size:15px;color:var(--muted)}
+.count.on{border-color:var(--char);box-shadow:inset 0 0 0 1.5px var(--char)}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.tools .inp{flex:1;min-width:200px}
+.req{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius);margin-bottom:10px}
+.req[open]{border-color:var(--char)}
+.req summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;cursor:pointer;list-style:none}
+.req summary::-webkit-details-marker{display:none}
+.req .main{flex:1;min-width:200px}
+.req .main strong{font-size:18px}
+.req .meta{color:var(--muted);font-size:14px}
+.st{font-size:13px;font-weight:600;padding:3px 12px;border-radius:20px;white-space:nowrap}
+.st-new{background:#ffe1cf;color:#7a2c00}
+.st-quoted{background:#dbe7fb;color:#12336b}
+.st-prog{background:#f7ebbd;color:#5c4400}
+.st-done{background:#d6f0df;color:#0d5229}
+.body{padding:4px 16px 16px;border-top:1.5px dashed var(--line)}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:14px 0;font-size:15px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-weight:500;word-break:break-word}
+.edit{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:6px}
+.edit .wide{grid-column:1/-1}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.empty{padding:28px;text-align:center;color:var(--muted);background:var(--paper);border:1.5px dashed var(--line);border-radius:var(--radius)}
+.wk{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius);padding:12px 16px;margin-bottom:10px}
+.wk .main{flex:1;min-width:180px}
+.addw{background:var(--paper);border:1.5px solid var(--char);border-radius:var(--radius);padding:16px;margin-top:18px}
+.addw h2{font-size:26px;margin-bottom:10px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--char);color:#fff;padding:10px 18px;border-radius:var(--radius);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;max-width:90vw}
+.toast.show{opacity:1}
+.toast.bad{background:var(--danger)}
+</style>
+</head>
+<body>
+
+<div id="login" hidden>
+  <form class="login" id="loginForm" autocomplete="on">
+    <h1>Staff login</h1>
+    <p class="hint">Only the owner can see customer requests.</p>
+    <div class="demo" id="loginDemo" hidden>Demo mode: type anything to sign in.</div>
+    <div class="fld"><label class="lab" for="em">Email</label><input class="inp" id="em" type="email" autocomplete="username"></div>
+    <div class="fld"><label class="lab" for="pw">Password</label><input class="inp" id="pw" type="password" autocomplete="current-password"></div>
+    <p class="err" id="loginErr" role="alert"></p>
+    <button class="btn btn-primary" type="submit" style="width:100%">Sign in</button>
+    <p style="margin:14px 0 0"><a href="index.html">Back to the website</a></p>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <div class="bar"><div class="in">
+    <h1 id="bizName">Requests</h1>
+    <div style="display:flex;gap:8px">
+      <a class="btn btn-ghost btn-sm" href="index.html">View website</a>
+      <button class="btn btn-ghost btn-sm" id="logout" type="button">Sign out</button>
+    </div>
+  </div></div>
+  <div class="page">
+    <div class="demo" id="appDemo" hidden>Demo mode: data is saved only in this browser. Follow README.md to connect the real database.</div>
+    <div class="tabs">
+      <button class="chip on" id="tabReq" type="button" data-tab="requests">Requests</button>
+      <button class="chip" id="tabWk" type="button" data-tab="welders">Welders</button>
+      <button class="btn btn-quiet btn-sm" id="refresh" type="button" style="margin-left:auto"><i class="ti ti-refresh" aria-hidden="true"></i>Refresh</button>
+    </div>
+    <div id="reqView">
+      <div class="counts" id="counts"></div>
+      <div class="tools"><input class="inp" id="search" type="search" placeholder="Search by name, phone, item or reference" aria-label="Search requests"></div>
+      <div id="list"></div>
+    </div>
+    <div id="wkView" hidden>
+      <div id="wkList"></div>
+      <form class="addw" id="addW">
+        <h2>Add a welder</h2>
+        <div class="edit">
+          <div><label class="lab" for="wn">Name</label><input class="inp" id="wn" required></div>
+          <div><label class="lab" for="wp">WhatsApp number</label><input class="inp" id="wp" type="tel" placeholder="081 0628 5867" required></div>
+          <div class="wide"><label class="lab" for="ws">What they are best at (optional)</label><input class="inp" id="ws" placeholder="Gates and doors"></div>
+        </div>
+        <p class="err" id="wErr" role="alert" style="margin-top:8px"></p>
+        <button class="btn btn-primary" type="submit">Add welder</button>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+(function () {
+  'use strict';
+  var cfg = window.SITE_CONFIG || {}, API = window.API;
+  var STATUSES = ['New', 'Quoted', 'In progress', 'Done'];
+  var S = { reqs: [], workers: [], filter: 'All', q: '', tab: 'requests', open: {} };
+
+  function $(s) { return document.querySelector(s); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function trim(s) { return String(s || '').replace(/^\s+|\s+$/g, ''); }
+  function toast(msg, bad) {
+    var t = $('#toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (bad ? ' bad' : '');
+    clearTimeout(toast.t);
+    toast.t = setTimeout(function () { t.className = 'toast'; }, 3200);
+  }
+  function fmt(iso) {
+    try { return new Date(iso).toLocaleString('en-NG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+    catch (e) { return iso || ''; }
+  }
+  function stClass(s) { return s === 'New' ? 'st-new' : s === 'Quoted' ? 'st-quoted' : s === 'In progress' ? 'st-prog' : 'st-done'; }
+  function workerName(id) {
+    for (var i = 0; i < S.workers.length; i++) if (S.workers[i].id === id) return S.workers[i].name;
+    return '';
+  }
+
+  document.title = 'Staff area | ' + (cfg.BUSINESS_NAME || '');
+  $('#bizName').textContent = cfg.BUSINESS_NAME || 'Requests';
+  if (API.demo) { $('#loginDemo').hidden = false; $('#appDemo').hidden = false; }
+
+  /* ---------- login ---------- */
+  function showLogin() { $('#app').hidden = true; $('#login').hidden = false; }
+  function showApp() {
+    $('#login').hidden = true; $('#app').hidden = false;
+    loadAll();
+  }
+  $('#loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var err = $('#loginErr'); err.textContent = '';
+    API.signIn(trim($('#em').value), $('#pw').value).then(function () {
+      $('#pw').value = '';
+      showApp();
+    }).catch(function () { err.textContent = 'That email or password is wrong. Try again.'; });
+  });
+  $('#logout').addEventListener('click', function () { API.signOut().then(showLogin); });
+
+  /* ---------- load ---------- */
+  function loadAll() {
+    return Promise.all([API.listRequests(), API.getWorkers()]).then(function (r) {
+      S.reqs = r[0] || [];
+      S.workers = r[1] || [];
+      render();
+    }).catch(function (err) {
+      if (window.console) console.error(err);
+      toast('Could not load your data. Check your internet and press Refresh.', true);
+    });
+  }
+  $('#refresh').addEventListener('click', function () { loadAll().then(function () { toast('Updated'); }); });
+
+  /* ---------- tabs ---------- */
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-tab]');
+    if (!t) return;
+    S.tab = t.getAttribute('data-tab');
+    render();
+  });
+
+  function render() {
+    $('#tabReq').className = 'chip' + (S.tab === 'requests' ? ' on' : '');
+    $('#tabWk').className = 'chip' + (S.tab === 'welders' ? ' on' : '');
+    $('#reqView').hidden = S.tab !== 'requests';
+    $('#wkView').hidden = S.tab !== 'welders';
+    if (S.tab === 'requests') { renderCounts(); renderList(); } else renderWorkers();
+  }
+
+  /* ---------- requests ---------- */
+  function renderCounts() {
+    var h = '<button type="button" class="count' + (S.filter === 'All' ? ' on' : '') + '" data-filter="All"><b>' + S.reqs.length + '</b><span>All requests</span></button>';
+    STATUSES.forEach(function (s) {
+      var n = S.reqs.filter(function (r) { return r.status === s; }).length;
+      h += '<button type="button" class="count' + (S.filter === s ? ' on' : '') + '" data-filter="' + esc(s) + '"><b>' + n + '</b><span>' + esc(s) + '</span></button>';
+    });
+    $('#counts').innerHTML = h;
+  }
+
+  function matches(r) {
+    if (S.filter !== 'All' && r.status !== S.filter) return false;
+    if (!S.q) return true;
+    var hay = [r.customer_name, r.customer_phone, r.item, r.ref, r.location].join(' ').toLowerCase();
+    return hay.indexOf(S.q) > -1;
+  }
+
+  function reqCard(r) {
+    var rows = [];
+    Object.keys(r.details || {}).forEach(function (k) { rows.push([k, r.details[k]]); });
+    rows = rows.concat([['Material', r.material], ['Finish', r.finish], ['Budget', r.budget], ['Needed', r.needed_by], ['Phone', r.customer_phone], ['Location', r.location], ['Customer notes', r.notes]]);
+    var kv = rows.filter(function (x) { return x[1]; }).map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('');
+    var wOpts = '<option value="">Not assigned</option>' + S.workers.map(function (w) {
+      return '<option value="' + esc(w.id) + '"' + (w.id === r.worker_id ? ' selected' : '') + '>' + esc(w.name) + (w.available ? '' : ' (busy)') + '</option>';
+    }).join('');
+    var sOpts = STATUSES.map(function (s) { return '<option' + (s === r.status ? ' selected' : '') + '>' + s + '</option>'; }).join('');
+    var msg = 'Hello ' + r.customer_name + ', this is ' + (cfg.BUSINESS_NAME || 'the workshop') + ' about your request ' + r.ref + ' (' + (r.item || 'build') + ').';
+    var wa = 'https://wa.me/' + API.toIntl(r.customer_phone) + '?text=' + encodeURIComponent(msg);
+    var who = workerName(r.worker_id);
+    return '<details class="req" data-id="' + esc(r.id) + '"' + (S.open[r.id] ? ' open' : '') + '>' +
+      '<summary><span class="main"><strong>' + esc(r.item) + '</strong> for ' + esc(r.customer_name) + '<br><span class="meta">' + esc(r.ref) + ', ' + esc(fmt(r.created_at)) + (who ? ', ' + esc(who) : '') + '</span></span>' +
+      '<span class="st ' + stClass(r.status) + '">' + esc(r.status) + '</span></summary>' +
+      '<div class="body"><dl class="kv">' + kv + '</dl>' +
+      '<div class="edit">' +
+      '<div><label class="lab">Status</label><select class="inp" data-k="status">' + sOpts + '</select></div>' +
+      '<div><label class="lab">Assigned welder</label><select class="inp" data-k="worker_id">' + wOpts + '</select></div>' +
+      '<div class="wide"><label class="lab">Quote (naira)</label><input class="inp" data-k="quote_amount" value="' + esc(r.quote_amount || '') + '" placeholder="120,000"></div>' +
+      '<div class="wide"><label class="lab">Your notes</label><textarea class="inp" data-k="admin_notes">' + esc(r.admin_notes || '') + '</textarea></div>' +
+      '</div><div class="row">' +
+      '<button type="button" class="btn btn-primary" data-act="save">Save changes</button>' +
+      '<a class="btn btn-wa" href="' + esc(wa) + '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>Message customer</a>' +
+      '<button type="button" class="btn btn-danger" data-act="delete" style="margin-left:auto">Delete</button>' +
+      '</div></div></details>';
+  }
+
+  function renderList() {
+    var list = S.reqs.filter(matches);
+    if (!list.length) {
+      $('#list').innerHTML = '<div class="empty">' + (S.reqs.length ? 'No requests match this filter.' : 'No requests yet. When a customer sends one from the website, it will appear here.') + '</div>';
+      return;
+    }
+    $('#list').innerHTML = list.map(reqCard).join('');
+  }
+
+  document.addEventListener('click', function (e) {
+    var f = e.target.closest('[data-filter]');
+    if (f) { S.filter = f.getAttribute('data-filter'); renderCounts(); renderList(); return; }
+
+    var btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-act');
+    var card = btn.closest('.req');
+
+    if (act === 'save' && card) {
+      var id = card.getAttribute('data-id');
+      var patch = {
+        status: card.querySelector('[data-k="status"]').value,
+        worker_id: card.querySelector('[data-k="worker_id"]').value || null,
+        quote_amount: trim(card.querySelector('[data-k="quote_amount"]').value) || null,
+        admin_notes: trim(card.querySelector('[data-k="admin_notes"]').value) || null
+      };
+      btn.disabled = true;
+      API.updateRequest(id, patch).then(function () { toast('Saved'); return loadAll(); })
+        .catch(function () { btn.disabled = false; toast('Could not save. Check your internet and try again.', true); });
+    }
+    if (act === 'delete' && card) {
+      if (!window.confirm('Delete this request for good?')) return;
+      var did = card.getAttribute('data-id');
+      API.deleteRequest(did).then(function () { delete S.open[did]; toast('Deleted'); return loadAll(); })
+        .catch(function () { toast('Could not delete. Try again.', true); });
+    }
+    if (act === 'toggle-w') {
+      var wid = btn.getAttribute('data-id'), cur = btn.getAttribute('data-avail') === '1';
+      API.updateWorker(wid, { available: !cur }).then(loadAll).catch(function () { toast('Could not update. Try again.', true); });
+    }
+    if (act === 'delete-w') {
+      if (!window.confirm('Remove this welder? Their past requests stay, but show as not assigned.')) return;
+      API.deleteWorker(btn.getAttribute('data-id')).then(function () { toast('Welder removed'); return loadAll(); })
+        .catch(function () { toast('Could not remove. Try again.', true); });
+    }
+  });
+
+  document.addEventListener('toggle', function (e) {
+    var d = e.target;
+    if (d && d.classList && d.classList.contains('req')) S.open[d.getAttribute('data-id')] = d.open;
+  }, true);
+
+  $('#search').addEventListener('input', function () { S.q = trim(this.value).toLowerCase(); renderList(); });
+
+  /* ---------- welders ---------- */
+  function renderWorkers() {
+    if (!S.workers.length) { $('#wkList').innerHTML = '<div class="empty">No welders yet. Add one below so customers can choose them.</div>'; return; }
+    $('#wkList').innerHTML = S.workers.map(function (w) {
+      return '<div class="wk"><div class="main"><strong>' + esc(w.name) + '</strong><br><span class="meta">' + esc(w.phone) + (w.specialty ? ', ' + esc(w.specialty) : '') + '</span></div>' +
+        '<span class="badge ' + (w.available ? 'b-ok' : 'b-busy') + '">' + (w.available ? 'Available' : 'Busy') + '</span>' +
+        '<button type="button" class="btn btn-quiet btn-sm" data-act="toggle-w" data-id="' + esc(w.id) + '" data-avail="' + (w.available ? 1 : 0) + '">' + (w.available ? 'Mark as busy' : 'Mark as available') + '</button>' +
+        '<button type="button" class="btn btn-danger btn-sm" data-act="delete-w" data-id="' + esc(w.id) + '">Remove</button></div>';
+    }).join('');
+  }
+
+  $('#addW').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = trim($('#wn').value), phone = trim($('#wp').value), err = $('#wErr');
+    err.textContent = '';
+    if (name.length < 2) { err.textContent = 'Enter the welder\'s name.'; return; }
+    if (String(phone).replace(/\D/g, '').length < 10) { err.textContent = 'Enter a phone number with at least 10 digits.'; return; }
+    API.addWorker({ name: name, phone: API.toIntl(phone), specialty: trim($('#ws').value) || null, available: true }).then(function () {
+      $('#wn').value = ''; $('#wp').value = ''; $('#ws').value = '';
+      toast('Welder added');
+      return loadAll();
+    }).catch(function () { err.textContent = 'Could not add the welder. Try again.'; });
+  });
+
+  /* ---------- start ---------- */
+  API.getSession().then(function (s) { if (s) showApp(); else showLogin(); }).catch(showLogin);
+})();
+</script>
+</body>
+</html>

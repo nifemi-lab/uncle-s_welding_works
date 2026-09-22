@@ -82,7 +82,7 @@
 <div id="reset" hidden>
   <form class="login" id="resetForm" autocomplete="on">
     <h1>Choose a new password</h1>
-    <p class="hint">Your reset link worked. Pick a password you will remember.</p>
+    <p class="hint" id="resetHint">Your reset link worked. Pick a password you will remember.</p>
     <div class="fld"><label class="lab" for="np1">New password</label><input class="inp" id="np1" type="password" autocomplete="new-password"></div>
     <div class="fld"><label class="lab" for="np2">Type it again</label><input class="inp" id="np2" type="password" autocomplete="new-password"></div>
     <p class="err" id="resetErr" role="alert"></p>
@@ -95,6 +95,7 @@
     <h1 id="bizName">Requests</h1>
     <div style="display:flex;gap:8px">
       <a class="btn btn-ghost btn-sm" href="index.html">View website</a>
+      <button class="btn btn-ghost btn-sm" id="pwChange" type="button">Change password</button>
       <button class="btn btn-ghost btn-sm" id="pkAdd" type="button" hidden><i class="ti ti-fingerprint" aria-hidden="true"></i>Add passkey</button>
       <button class="btn btn-ghost btn-sm" id="logout" type="button">Sign out</button>
     </div>
@@ -209,6 +210,10 @@
   });
 
   if (!API.demo && window.PublicKeyCredential) $('#pkLogin').hidden = false;
+  $('#pwChange').addEventListener('click', function () {
+    $('#resetHint').textContent = 'You are signed in. Pick a new password you will remember.';
+    showReset();
+  });
   $('#pkLogin').addEventListener('click', function () {
     var err = $('#loginErr'); err.textContent = '';
     API.signInWithPasskey().then(function () { showApp(); })
@@ -401,7 +406,10 @@
   });
 
   /* ---------- start ---------- */
-  API.onPasswordRecovery(function () { showReset(); });
+  API.onPasswordRecovery(function () {
+    $('#resetHint').textContent = 'Your reset link worked. Pick a password you will remember.';
+    showReset();
+  });
   API.getSession().then(function (s) {
     if (s && /type=recovery/.test(location.hash)) showReset();
     else if (s) showApp();

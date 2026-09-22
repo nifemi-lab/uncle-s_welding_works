@@ -379,6 +379,13 @@ footer a{color:#d2cac1}
     return h;
   }
 
+  function phoneHint(v) {
+    v = trim(v);
+    if (!v) return { text: '', bad: false };
+    if (API.isValidNgPhone(v)) return { text: 'WhatsApp will use: ' + API.formatDisplay(v), bad: false };
+    return { text: 'Not a full Nigerian mobile yet. Type it like 0803 123 4567 (11 digits starting with 0).', bad: true };
+  }
+
   function summaryRows() {
     var it = ITEMS[state.item], rows = [['Item', it.label]], det = detailsObj();
     Object.keys(det).forEach(function (k) { rows.push([k, det[k]]); });
@@ -400,10 +407,11 @@ footer a{color:#d2cac1}
   }
 
   function stepContact() {
-    var rows = summaryRows();
+    var rows = summaryRows(), ph = phoneHint(state.d.phone);
     return '<h3>Your details</h3>' +
       '<div class="two"><div class="fld"><label class="lab" for="c-name">Your name</label><input class="inp" id="c-name" autocomplete="name" data-in="name" value="' + esc(state.d.name || '') + '"></div>' +
-      '<div class="fld"><label class="lab" for="c-phone">Phone or WhatsApp number</label><input class="inp" id="c-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="081 0628 5867" data-in="phone" value="' + esc(state.d.phone || '') + '"></div></div>' +
+      '<div class="fld"><label class="lab" for="c-phone">Phone or WhatsApp number</label><input class="inp" id="c-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="081 0628 5867" data-in="phone" value="' + esc(state.d.phone || '') + '">' +
+      '<p class="hint' + (ph.bad ? ' bad' : '') + '" id="c-phone-hint" style="margin:6px 0 0">' + esc(ph.text) + '</p></div></div>' +
       '<div class="fld"><label class="lab" for="c-loc">Where should it be delivered or fitted?</label><input class="inp" id="c-loc" placeholder="Area and town" data-in="location" value="' + esc(state.d.location || '') + '"></div>' +
       '<div class="q"><p class="lab">When do you need it? (optional)</p>' + chips('needed', NEEDED, false) + '</div>' +
       '<div class="fld"><label class="lab" for="c-notes">Anything else we should know? (optional)</label><textarea class="inp" id="c-notes" data-in="notes">' + esc(state.d.notes || '') + '</textarea></div>' +
@@ -512,8 +520,7 @@ footer a{color:#d2cac1}
     if (step === 3) return '';
     if (step === 4) {
       if (trim(d.name).length < 2) return 'Enter your name.';
-      var digits = String(d.phone || '').replace(/\D/g, '');
-      if (digits.length < 10 || digits.length > 14) return 'Enter a phone number with at least 10 digits.';
+      if (!API.isValidNgPhone(d.phone)) return 'Enter a full Nigerian mobile number, like 0803 123 4567.';
       if (trim(d.location).length < 3) return 'Enter where it should be delivered or fitted.';
     }
     return '';
@@ -541,7 +548,7 @@ footer a{color:#d2cac1}
     var row = {
       ref: makeRef(),
       customer_name: trim(state.d.name),
-      customer_phone: trim(state.d.phone),
+      customer_phone: API.toIntl(state.d.phone),
       location: trim(state.d.location),
       item: it.label,
       details: detailsObj(),
@@ -638,6 +645,10 @@ footer a{color:#d2cac1}
     if (t.hasAttribute('data-in')) state.d[t.getAttribute('data-in')] = t.value;
     else if (t.hasAttribute('data-size')) { (state.d.size || (state.d.size = {}))[t.getAttribute('data-size')] = t.value; }
     else if (t.hasAttribute('data-unit')) { (state.d.size || (state.d.size = {})).unit = t.value; }
+    if (t.id === 'c-phone') {
+      var h = $('#c-phone-hint'), p = phoneHint(t.value);
+      if (h) { h.textContent = p.text; h.className = 'hint' + (p.bad ? ' bad' : ''); }
+    }
   });
   $('#wizard').addEventListener('change', function (e) {
     var t = e.target;

@@ -279,7 +279,7 @@
   function reqCard(r) {
     var rows = [];
     Object.keys(r.details || {}).forEach(function (k) { rows.push([k, r.details[k]]); });
-    rows = rows.concat([['Material', r.material], ['Finish', r.finish], ['Budget', r.budget], ['Needed', r.needed_by], ['Phone', r.customer_phone], ['Location', r.location], ['Customer notes', r.notes]]);
+    rows = rows.concat([['Material', r.material], ['Finish', r.finish], ['Budget', r.budget], ['Needed', r.needed_by], ['Phone', API.formatDisplay(r.customer_phone) || r.customer_phone], ['Location', r.location], ['Customer notes', r.notes]]);
     var offs = S.offers.filter(function (o) { return o.request_id === r.id; });
     var base = location.origin + location.pathname.replace(/[^/]*$/, 'welder.html');
     var offHtml = offs.length
@@ -387,7 +387,11 @@
   function renderWorkers() {
     if (!S.workers.length) { $('#wkList').innerHTML = '<div class="empty">No welders yet. Add one below so customers can choose them.</div>'; return; }
     $('#wkList').innerHTML = S.workers.map(function (w) {
-      return '<div class="wk"><div class="main"><strong>' + esc(w.name) + '</strong><br><span class="meta">' + esc(w.phone) + (w.specialty ? ', ' + esc(w.specialty) : '') + '</span></div>' +
+      var numOk = API.isValidNgPhone(w.phone);
+      var num = numOk ? API.formatDisplay(w.phone) : esc(w.phone);
+      return '<div class="wk"><div class="main"><strong>' + esc(w.name) + '</strong><br><span class="meta">' + num + (w.specialty ? ', ' + esc(w.specialty) : '') + '</span>' +
+        (numOk ? '' : '<br><span class="hint bad" style="margin-top:4px">This number is too short for WhatsApp. Remove and add them again with the full 11 digits, like 0803 123 4567.</span>') +
+        '</div>' +
         '<span class="badge ' + (w.available ? 'b-ok' : 'b-busy') + '">' + (w.available ? 'Available' : 'Busy') + '</span>' +
         '<button type="button" class="btn btn-quiet btn-sm" data-act="toggle-w" data-id="' + esc(w.id) + '" data-avail="' + (w.available ? 1 : 0) + '">' + (w.available ? 'Mark as busy' : 'Mark as available') + '</button>' +
         '<button type="button" class="btn btn-danger btn-sm" data-act="delete-w" data-id="' + esc(w.id) + '">Remove</button></div>';

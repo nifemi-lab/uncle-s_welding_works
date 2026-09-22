@@ -37,6 +37,21 @@
     if (res.error) throw res.error;
   }
 
+  function uuid4() {
+    if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+    var b = window.crypto && window.crypto.getRandomValues
+      ? window.crypto.getRandomValues(new Uint8Array(16)) : null;
+    var out = '';
+    for (var i = 0; i < 16; i++) {
+      var n = b ? b[i] : Math.floor(Math.random() * 256);
+      if (i === 6) n = (n & 0x0f) | 0x40;
+      if (i === 8) n = (n & 0x3f) | 0x80;
+      out += ('0' + n.toString(16)).slice(-2);
+      if (i === 3 || i === 5 || i === 7 || i === 9) out += '-';
+    }
+    return out;
+  }
+
   // Shrink a picked photo on the phone so uploads are small and fast.
   function downscale(file, maxPx) {
     return new Promise(function (resolve) {
@@ -91,9 +106,11 @@
         save('demo_requests', list);
         return Promise.resolve(copy);
       }
-      return sb.from('requests').insert(row).select().then(unwrap).then(function (rows) {
-        return rows && rows[0];
-      });
+      // Anon has no SELECT policy on requests, so INSERT ... RETURNING is
+      // rejected by RLS; supply the id ourselves and insert without .select().
+      var copy = JSON.parse(JSON.stringify(row));
+      copy.id = uuid4();
+      return sb.from('requests').insert(copy).then(check).then(function () { return copy; });
     },
 
     // Returns a list of photo URLs to store on the request. Demo keeps them in
@@ -128,8 +145,7 @@
         out += ('0' + n.toString(16)).slice(-2);
       }
       return out;
-    },
-    createOffers: function (requestId, workerIds) {
+    },    createOffers: function (requestId, workerIds) {
       var rows = workerIds.map(function (wid) {
         return { request_id: requestId, worker_id: wid, token: api.makeToken(), status: 'open' };
       });

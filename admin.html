@@ -49,6 +49,7 @@
 .phs img{width:100%;height:100%;object-fit:cover}
 .offs{display:flex;flex-direction:column;gap:6px;margin:4px 0 12px}
 .off{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--line);border-radius:var(--radius);padding:6px 10px;font-size:13px}
+.hint.bad{color:var(--danger);font-weight:600}
 .edit{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:6px}
 .edit .wide{grid-column:1/-1}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
@@ -121,6 +122,7 @@
           <div><label class="lab" for="wp">WhatsApp number</label><input class="inp" id="wp" type="tel" placeholder="081 0628 5867" required></div>
           <div class="wide"><label class="lab" for="ws">What they are best at (optional)</label><input class="inp" id="ws" placeholder="Gates and doors"></div>
         </div>
+        <p class="hint" id="wHint" style="margin-top:8px"></p>
         <p class="err" id="wErr" role="alert" style="margin-top:8px"></p>
         <button class="btn btn-primary" type="submit">Add welder</button>
       </form>
@@ -392,14 +394,21 @@
     }).join('');
   }
 
+  $('#wp').addEventListener('input', function () {
+    var v = trim(this.value), h = $('#wHint');
+    if (!v) { h.textContent = ''; h.className = 'hint'; return; }
+    if (API.isValidNgPhone(v)) { h.textContent = 'WhatsApp will use: ' + API.formatDisplay(v); h.className = 'hint'; }
+    else { h.textContent = 'Not a full Nigerian mobile yet. Type it like 0803 123 4567 (11 digits starting with 0).'; h.className = 'hint bad'; }
+  });
+
   $('#addW').addEventListener('submit', function (e) {
     e.preventDefault();
     var name = trim($('#wn').value), phone = trim($('#wp').value), err = $('#wErr');
     err.textContent = '';
     if (name.length < 2) { err.textContent = 'Enter the welder\'s name.'; return; }
-    if (String(phone).replace(/\D/g, '').length < 10) { err.textContent = 'Enter a phone number with at least 10 digits.'; return; }
+    if (!API.isValidNgPhone(phone)) { err.textContent = 'Enter a full Nigerian mobile number, like 0803 123 4567.'; return; }
     API.addWorker({ name: name, phone: API.toIntl(phone), specialty: trim($('#ws').value) || null, available: true }).then(function () {
-      $('#wn').value = ''; $('#wp').value = ''; $('#ws').value = '';
+      $('#wn').value = ''; $('#wp').value = ''; $('#ws').value = ''; $('#wHint').textContent = '';
       toast('Welder added');
       return loadAll();
     }).catch(function () { err.textContent = 'Could not add the welder. Try again.'; });

@@ -387,6 +387,7 @@ footer a{color:#d2cac1}
     if (state.d.budget) rows.push(['Budget', state.d.budget]);
     var w = findWorker(state.workerId);
     rows.push(['Welder', w ? w.name : 'Any available welder']);
+    if (trim(state.d.phone)) rows.push(['Your WhatsApp', API.formatDisplay(state.d.phone) || trim(state.d.phone)]);
     return rows;
   }
 
@@ -466,6 +467,7 @@ footer a{color:#d2cac1}
 
   function renderDone(body, nav, bar, lab, focus) {
     var r = done.row, w = done.worker, url = waLink(r, w);
+    var num = API.formatDisplay(w ? w.phone : cfg.FALLBACK_WHATSAPP) || (w ? w.phone : cfg.FALLBACK_WHATSAPP);
     lab.textContent = done.saved ? 'Request sent' : 'Almost done';
     bar.innerHTML = STEPS.map(function () { return '<span class="done"></span>'; }).join('');
     body.innerHTML = '<h3>' + (done.saved ? 'Request sent' : 'One more thing') + '</h3>' +
@@ -475,6 +477,7 @@ footer a{color:#d2cac1}
       (done.offered
         ? '<p>We have offered your job to ' + done.offered + ' available welders. The first one to accept will message you on WhatsApp to agree the price and the date.</p>'
         : '<p>Next, open WhatsApp to talk with ' + (w ? esc(w.name) : 'the workshop') + ' about the price and the date. Your details are already typed in the message, so you only need to press send.</p>') +
+      '<p class="hint">The WhatsApp button chats with ' + (w ? esc(w.name) : 'the workshop') + ' at <strong>' + esc(num) + '</strong>. If WhatsApp says it cannot find that number, tell the workshop so they can fix it.</p>' +
       '<p style="margin-top:18px"><a class="btn btn-wa" href="' + esc(url) + '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>' + (done.offered ? 'Message the workshop' : 'Continue on WhatsApp') + '</a></p>';
     nav.innerHTML = '<button type="button" class="btn btn-quiet" data-act="restart">Start another request</button>';
     if (focus) { var hd = body.querySelector('h3'); if (hd) { hd.setAttribute('tabindex', '-1'); hd.focus({ preventScroll: true }); } }

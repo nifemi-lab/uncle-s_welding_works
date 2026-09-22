@@ -117,9 +117,11 @@
       var wa = 'https://wa.me/' + API.toIntl(r.customer_phone) + '?text=' + encodeURIComponent(
         'Hello ' + r.customer_name + ', this is ' + (data ? data.worker.name : 'your welder') +
         ' from ' + (cfg.BUSINESS_NAME || 'the workshop') + '. I took your request ' + r.ref + ' (' + r.item + ').');
+      var custNum = API.formatDisplay(r.customer_phone) || r.customer_phone;
       $('#box').innerHTML = '<h2>Job is yours <span class="st st-accepted">Accepted</span></h2>' +
         '<p>Request ' + esc(r.ref) + ' is now assigned to you. Message ' + esc(r.customer_name) + ' to agree the price and the date.</p>' +
-        '<p style="margin-top:14px"><a class="btn btn-wa" href="' + esc(wa) + '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>Message ' + esc(r.customer_name) + '</a></p>';
+        '<p style="margin-top:14px"><a class="btn btn-wa" href="' + esc(wa) + '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>Message ' + esc(r.customer_name) + '</a></p>' +
+        '<p class="hint" style="margin-top:10px">Customer number: <strong>' + esc(custNum) + '</strong> &middot; <a href="tel:' + esc(API.toIntl(r.customer_phone)) + '">Call instead</a> if WhatsApp cannot find it.</p>';
       return;
     }
     $('#box').innerHTML = '<h2>No problem <span class="st st-declined">Declined</span></h2>' +

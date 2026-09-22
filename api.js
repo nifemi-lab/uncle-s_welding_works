@@ -82,12 +82,29 @@
   var api = {
     demo: demo,
 
+    /*
+      Turns a Nigerian number typed any normal way (0803..., 803...,
+      +234803..., 234803..., 00234803..., with spaces or dashes) into the
+      plain international digits WhatsApp needs (234803...). Handles a
+      stray extra 0 typed after +234 by mistake too.
+    */
     toIntl: function (p) {
       var d = String(p || '').replace(/\D/g, '');
-      if (d.indexOf('234') === 0) return d;
-      if (d.charAt(0) === '0') return '234' + d.slice(1);
-      if (d.length === 10) return '234' + d;
-      return d;
+      if (d.indexOf('00') === 0) d = d.slice(2);
+      if (d.indexOf('234') === 0) d = d.slice(3);
+      if (d.charAt(0) === '0') d = d.slice(1);
+      return d ? '234' + d : '';
+    },
+    /* True only when the number looks like a real Nigerian mobile once converted. */
+    isValidNgPhone: function (p) {
+      var d = window.API.toIntl(p);
+      return /^234[7-9]\d{9}$/.test(d);
+    },
+    /* 234803...  ->  +234 803 000 0001, for showing the person what will be used. */
+    formatDisplay: function (p) {
+      var d = window.API.toIntl(p);
+      if (!/^234\d{10}$/.test(d)) return '';
+      return '+234 ' + d.slice(3, 6) + ' ' + d.slice(6, 9) + ' ' + d.slice(9);
     },
 
     /* ---------- public (customers) ---------- */

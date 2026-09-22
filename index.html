@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welding and fabrication</title>
+<meta name="description" content="Custom animal cages, gates, window guards and metalwork. Choose what you need, pick your welder, and get a price on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.wrap{max-width:1040px;margin:0 auto}
+.sec{padding:64px 20px}
+.sec h2{font-size:clamp(34px,5.5vw,50px);margin-bottom:8px}
+.lead{color:var(--muted);max-width:56ch;margin:0 0 28px}
+
+.top{position:sticky;top:0;z-index:20;background:var(--char);color:#fff;border-bottom:3px solid var(--spark)}
+.top .in{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-head);font-size:25px;font-weight:600;color:#fff;text-decoration:none;line-height:1}
+.brand i{display:grid;place-items:center;width:34px;height:34px;background:var(--spark-strong);border-radius:5px;font-size:20px}
+.nav{display:flex;align-items:center;gap:22px}
+.nav a.l{color:#e9e3dc;text-decoration:none;font-weight:500}
+.nav a.l:hover{color:#fff;text-decoration:underline}
+@media (max-width:760px){.nav a.l{display:none}}
+
+.hero{background:var(--char);color:#fff;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(#3a3735 2px,transparent 2px),linear-gradient(90deg,#3a3735 2px,transparent 2px);background-size:30px 30px;-webkit-mask-image:linear-gradient(90deg,transparent 25%,#000);mask-image:linear-gradient(90deg,transparent 25%,#000);opacity:.75}
+.hero .in{max-width:1040px;margin:0 auto;padding:72px 20px 80px;position:relative}
+.hero h1{font-size:clamp(50px,10vw,96px);max-width:11ch;font-weight:700}
+.hero p.sub{max-width:46ch;color:#dcd5cd;font-size:19px;margin:20px 0 28px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.points{display:flex;gap:8px 24px;flex-wrap:wrap;margin:34px 0 0;padding:0;list-style:none;color:#d2cac1;font-size:15px}
+.points li{display:flex;align-items:center;gap:6px}
+.points i{color:var(--spark);font-size:18px}
+
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.svc{display:block;width:100%;text-align:left;background:var(--paper);border:1.5px solid var(--line);border-left:6px solid var(--spark-strong);border-radius:var(--radius);padding:18px;cursor:pointer;font:inherit;color:inherit}
+.svc:hover{border-color:var(--char);border-left-color:var(--spark-strong)}
+.svc i{font-size:30px;color:var(--spark-strong)}
+.svc h3{font-size:27px;margin:8px 0 4px}
+.svc p{margin:0;color:var(--muted);font-size:15px}
+
+.gallery{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.gallery figure{margin:0;aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;background:var(--line);position:relative}
+.gallery img{width:100%;height:100%;object-fit:cover}
+.gallery figcaption{position:absolute;left:0;right:0;bottom:0;padding:8px 12px;background:rgba(36,33,31,.85);color:#fff;font-size:14px}
+.gallery .ph{display:grid;place-items:center;height:100%;color:#7d756c;text-align:center;padding:12px;font-size:14px}
+.gallery .ph i{font-size:30px;display:block;margin-bottom:4px}
+
+.how{background:#fff;border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line)}
+.steps{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));padding:0;margin:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;padding-top:6px}
+.steps li::before{content:counter(s);display:block;font-family:var(--font-head);font-size:56px;font-weight:700;line-height:1;color:var(--spark-strong)}
+.steps h3{font-size:26px;margin:4px 0 6px}
+.steps p{color:var(--muted);margin:0}
+
+.build{background:var(--char);color:#fff;padding-top:56px}
+.build h2{color:#fff}
+.build .lead{color:#d2cac1}
+.ticket{max-width:780px;margin:0 auto;background:var(--paper);color:var(--ink);border-radius:var(--radius)}
+.t-head{padding:14px 20px;background:var(--spark-strong);color:#fff;border-radius:var(--radius) var(--radius) 0 0;display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--font-head);font-size:23px;font-weight:600}
+.t-head span.stp{font-family:var(--font-body);font-size:15px;font-weight:500}
+.t-bar{display:flex;gap:6px;padding:16px 20px 0}
+.t-bar span{flex:1;height:6px;background:var(--line);border-radius:3px}
+.t-bar span.done{background:var(--char)}
+.t-bar span.now{background:var(--spark-strong)}
+.t-body{padding:20px 20px 6px}
+.t-body h3{font-size:34px;margin-bottom:6px}
+.t-body h3:focus{outline:none}
+.t-body .svc h3{font-size:27px;margin:8px 0 4px}
+.q{margin:22px 0}
+.err{color:var(--danger);font-weight:600;margin:14px 0 0;min-height:1.5em}
+.t-nav{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 20px 20px;border-top:2px dashed var(--line);margin-top:8px}
+.dims{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
+.dim span{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+.check{display:flex;align-items:center;gap:10px;margin-top:12px;cursor:pointer}
+.check input{width:22px;height:22px;accent-color:var(--spark-strong)}
+.fld{margin:0 0 16px}
+.thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.th{position:relative;width:84px;height:84px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--line);background:#fff}
+.th img{width:100%;height:100%;object-fit:cover}
+.thx{position:absolute;top:2px;right:2px;width:24px;height:24px;padding:0;line-height:1;border:none;border-radius:50%;background:rgba(36,33,31,.82);color:#fff;font-size:18px;cursor:pointer}
+.thx:hover{background:var(--danger)}
+.two{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.w{display:flex;align-items:center;gap:14px;padding:14px;border:1.5px solid #bfb6ac;border-radius:var(--radius);background:#fff;cursor:pointer;width:100%;text-align:left;font:inherit;color:inherit;margin-bottom:10px}
+.w:hover{border-color:var(--char)}
+.w.on{border-color:var(--char);background:var(--ember);box-shadow:inset 0 0 0 1.5px var(--char)}
+.w[disabled]{opacity:.55;cursor:not-allowed}
+.w .ic{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--char);color:#fff;font-family:var(--font-head);font-size:22px;flex:none}
+.w .nm{font-weight:600}
+.w .sp{color:var(--muted);font-size:15px}
+.w .bd{margin-left:auto}
+.rev{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:8px 0 0;padding:14px;background:var(--bone);border-radius:var(--radius);font-size:15px}
+.rev dt{color:var(--muted)}
+.rev dd{margin:0;font-weight:500;word-break:break-word}
+.ref{font-family:var(--font-head);font-size:26px;letter-spacing:.04em}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.demo{max-width:780px;margin:0 auto 14px;background:#fff3cd;color:#5c4400;padding:10px 14px;border-radius:var(--radius);font-size:15px}
+
+footer{background:var(--char);color:#d2cac1;padding:34px 20px 40px;font-size:15px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-between}
+footer i{margin-right:6px;color:var(--spark)}
+footer a{color:#d2cac1}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="in">
+    <a class="brand" href="#top"><i class="ti ti-flame" aria-hidden="true"></i><span data-biz>Welding Works</span></a>
+    <nav class="nav" aria-label="Main">
+      <a class="l" href="#services">What we build</a>
+      <a class="l" href="#work">Our work</a>
+      <a class="l" href="#build">Request a build</a>
+      <a class="btn btn-wa btn-sm" id="topWa" href="#" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>WhatsApp</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="in">
+    <h1>Built to your size. Welded to last.</h1>
+    <p class="sub">Animal cages, gates, window guards and custom metalwork. Tell us what you need, choose your welder, and we'll agree the price on WhatsApp.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#build">Request a build</a>
+      <a class="btn btn-ghost" href="#work">See our work</a>
+    </div>
+    <ul class="points">
+      <li><i class="ti ti-check" aria-hidden="true"></i>Free quote</li>
+      <li><i class="ti ti-check" aria-hidden="true"></i>Made to measure</li>
+      <li><i class="ti ti-check" aria-hidden="true"></i>Delivery available</li>
+    </ul>
+  </div>
+</section>
+<div class="seam" aria-hidden="true"></div>
+
+<section class="sec" id="services">
+  <div class="wrap">
+    <h2>What we build</h2>
+    <p class="lead">Pick one to start your request. If yours isn't listed, choose custom work.</p>
+    <div class="grid" id="svcGrid"></div>
+  </div>
+</section>
+
+<section class="sec" id="work" style="padding-top:8px">
+  <div class="wrap">
+    <h2>Our work</h2>
+    <p class="lead">A few jobs we've finished.</p>
+    <div class="gallery" id="gallery"></div>
+  </div>
+</section>
+
+<section class="sec how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="lead">Three steps from idea to finished metalwork.</p>
+    <ol class="steps">
+      <li><h3>Tell us what you need</h3><p>Answer a few quick questions about the size, material and finish.</p></li>
+      <li><h3>Choose your welder</h3><p>See who is free now and pick the person you want to work with.</p></li>
+      <li><h3>Agree the price on WhatsApp</h3><p>Your details are sent ahead, so you go straight to the quote.</p></li>
+    </ol>
+  </div>
+</section>
+
+<div class="seam" aria-hidden="true"></div>
+<section class="sec build" id="build">
+  <div class="wrap">
+    <h2 style="text-align:center">Start your request</h2>
+    <p class="lead" style="text-align:center;margin-left:auto;margin-right:auto">It takes about two minutes. You can go back at any step.</p>
+    <div class="demo" id="demoNote" hidden>Demo mode: requests are saved only in this browser. Follow README.md to connect the real database.</div>
+    <div class="ticket" id="wizard">
+      <div class="t-head"><span>Build ticket</span><span class="stp" id="wizLabel"></span></div>
+      <div class="t-bar" id="wizBar" aria-hidden="true"></div>
+      <div class="t-body" id="wizBody"></div>
+      <div class="t-nav" id="wizNav"></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <strong data-biz style="font-size:17px;color:#fff"></strong><br>
+      <span id="fHours"></span>
+    </div>
+    <div>
+      <i class="ti ti-phone" aria-hidden="true"></i><span id="fPhone"></span><br>
+      <i class="ti ti-map-pin" aria-hidden="true"></i><span id="fAddr"></span>
+    </div>
+    <div><a href="admin.html">Staff login</a></div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+(function () {
+  'use strict';
+  var cfg = window.SITE_CONFIG || {};
+  var API = window.API;
+
+  function $(s, r) { return (r || document).querySelector(s); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function trim(s) { return String(s || '').replace(/^\s+|\s+$/g, ''); }
+
+  /* ---------- page text from config ---------- */
+  document.title = (cfg.BUSINESS_NAME || 'Welding works') + ' | Custom metalwork';
+  [].forEach.call(document.querySelectorAll('[data-biz]'), function (n) { n.textContent = cfg.BUSINESS_NAME || ''; });
+  $('#fPhone').textContent = cfg.PHONE_DISPLAY || '';
+  $('#fAddr').textContent = cfg.ADDRESS || '';
+  $('#fHours').textContent = cfg.HOURS || '';
+  $('#topWa').href = 'https://wa.me/' + API.toIntl(cfg.FALLBACK_WHATSAPP) + '?text=' + encodeURIComponent('Hello, I have a question about a build.');
+  if (API.demo) $('#demoNote').hidden = false;
+
+  /* ---------- gallery ---------- */
+  (function () {
+    var g = cfg.GALLERY || [], h = '';
+    if (g.length) {
+      h = g.map(function (p) {
+        return '<figure><img loading="lazy" src="' + esc(p.src) + '" alt="' + esc(p.caption || 'Finished metalwork') + '">' +
+          (p.caption ? '<figcaption>' + esc(p.caption) + '</figcaption>' : '') + '</figure>';
+      }).join('');
+    } else {
+      for (var i = 0; i < 6; i++) h += '<figure><div class="ph"><span><i class="ti ti-photo" aria-hidden="true"></i>Photo of finished work goes here</span></div></figure>';
+    }
+    $('#gallery').innerHTML = h;
+  })();
+
+  /* ---------- what we can build ---------- */
+  var MATERIALS = {
+    cage: ['Mild steel pipe', 'Iron rod', 'Wire mesh on steel frame', 'Stainless steel'],
+    gate: ['Mild steel', 'Iron rod', 'Stainless steel', 'Galvanized steel'],
+    window: ['Mild steel', 'Iron rod', 'Stainless steel', 'Galvanized steel'],
+    door: ['Mild steel', 'Iron rod', 'Stainless steel', 'Galvanized steel'],
+    custom: ['Mild steel', 'Iron rod', 'Stainless steel', 'Galvanized steel', 'Not sure, advise me']
+  };
+  var FINISH = ['Black paint', 'Silver paint', 'White paint', 'Green paint', 'Another colour (I will say which)', 'No paint'];
+  var BUDGET = ['Under ₦50,000', '₦50,000 to ₦150,000', '₦150,000 to ₦300,000', 'Above ₦300,000', 'Not sure yet'];
+  var NEEDED = ['As soon as possible', 'Within 2 weeks', 'Within a month', 'No rush'];
+
+  var ITEMS = {
+    cage: {
+      label: 'Animal cage', icon: 'ti-paw', blurb: 'Dogs, cats, rabbits, poultry and more',
+      fields: [
+        { id: 'animal', label: 'Animal', q: 'What animal is the cage for?', type: 'chips', req: true, options: ['Dog', 'Cat', 'Rabbit', 'Poultry', 'Bird', 'Goat or sheep', 'Other'] },
+        { id: 'levels', label: 'Levels', q: 'How many levels?', type: 'chips', req: true, options: ['1 level', '2 levels', '3 levels'] },
+        { id: 'size', label: 'Size', q: 'What size should it be?', type: 'size', req: true, dims: ['Length', 'Width', 'Height'] },
+        { id: 'extras', label: 'Extras', q: 'Any extras? (optional)', type: 'multi', options: ['Removable tray', 'Wheels', 'Lock', 'Roof cover', 'Feeding door'] }
+      ]
+    },
+    gate: {
+      label: 'Gate', icon: 'ti-door-enter', blurb: 'Swing and sliding iron gates',
+      fields: [
+        { id: 'type', label: 'Gate type', q: 'What kind of gate?', type: 'chips', req: true, options: ['Single swing', 'Double swing', 'Sliding'] },
+        { id: 'size', label: 'Size', q: 'What size should it be?', type: 'size', req: true, dims: ['Width', 'Height'] },
+        { id: 'design', label: 'Design', q: 'What design?', type: 'chips', req: true, options: ['Plain', 'Decorative', 'I have my own design'] },
+        { id: 'extras', label: 'Extras', q: 'Any extras? (optional)', type: 'multi', options: ['Small side door', 'Lock', 'Spikes on top'] }
+      ]
+    },
+    window: {
+      label: 'Window guard', icon: 'ti-layout-grid', blurb: 'Burglar proof and railings',
+      fields: [
+        { id: 'count', label: 'Number of windows', q: 'How many windows?', type: 'number', req: true },
+        { id: 'size', label: 'Size of each window', q: 'What size is each window?', type: 'size', req: true, dims: ['Width', 'Height'] },
+        { id: 'style', label: 'Style', q: 'What style?', type: 'chips', req: true, options: ['Plain bars', 'Decorative', 'Openable guard'] }
+      ]
+    },
+    door: {
+      label: 'Door', icon: 'ti-door', blurb: 'Security and steel doors',
+      fields: [
+        { id: 'type', label: 'Door type', q: 'What kind of door?', type: 'chips', req: true, options: ['Security door', 'Iron door with glass', 'Steel door'] },
+        { id: 'size', label: 'Size', q: 'What size should it be?', type: 'size', req: true, dims: ['Width', 'Height'] },
+        { id: 'extras', label: 'Extras', q: 'Any extras? (optional)', type: 'multi', options: ['Lock', 'Peephole', 'Louvre'] }
+      ]
+    },
+    custom: {
+      label: 'Custom work', icon: 'ti-tool', blurb: 'Stands, frames, anything metal',
+      fields: [
+        { id: 'what', label: 'What to build', q: 'What should we build?', type: 'area', req: true },
+        { id: 'size', label: 'Size', q: 'Rough size, if you know it (optional)', type: 'size', req: false, dims: ['Length', 'Width', 'Height'] }
+      ]
+    }
+  };
+  var ORDER = ['cage', 'gate', 'window', 'door', 'custom'];
+  var STEPS = ['What to build', 'Details', 'Material and finish', 'Choose a welder', 'Your details'];
+
+  $('#svcGrid').innerHTML = ORDER.map(function (k) {
+    var it = ITEMS[k];
+    return '<button type="button" class="svc" data-pick="' + k + '"><i class="ti ' + it.icon + '" aria-hidden="true"></i><h3>' + esc(it.label) + '</h3><p>' + esc(it.blurb) + '</p></button>';
+  }).join('');
+
+  /* ---------- wizard state ---------- */
+  var state, done, workers = [], sending = false;
+  function clearFiles() {
+    if (state && state.files) state.files.forEach(function (f) { try { URL.revokeObjectURL(f.url); } catch (e) {} });
+  }
+  function fresh() { clearFiles(); state = { step: 0, item: null, d: {}, workerId: 'any', files: [] }; done = null; }
+  fresh();
+
+  API.getWorkers().then(function (w) {
+    workers = (w || []).slice().sort(function (a, b) { return (b.available ? 1 : 0) - (a.available ? 1 : 0); });
+    if (state.step === 3 && !done) render();
+  }).catch(function () { workers = []; });
+
+  function findWorker(id) {
+    for (var i = 0; i < workers.length; i++) if (workers[i].id === id) return workers[i];
+    return null;
+  }
+
+  /* ---------- renderers ---------- */
+  function chips(id, options, multi) {
+    var cur = state.d[id];
+    return '<div class="chips" role="group">' + options.map(function (o) {
+      var on = multi ? (cur || []).indexOf(o) > -1 : cur === o;
+      return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-f="' + id + '" data-multi="' + (multi ? 1 : 0) + '" data-v="' + esc(o) + '" aria-pressed="' + on + '">' + esc(o) + '</button>';
+    }).join('') + '</div>';
+  }
+
+  function sizeField(f) {
+    var s = state.d.size || {}, unk = !!state.d.sizeUnknown;
+    var h = '<div class="dims">' + f.dims.map(function (k) {
+      return '<label class="dim"><span>' + esc(k) + '</span><input class="inp" type="number" inputmode="decimal" min="0" step="any" data-size="' + esc(k) + '" value="' + esc(s[k] || '') + '"' + (unk ? ' disabled' : '') + '></label>';
+    }).join('') +
+      '<label class="dim"><span>Unit</span><select class="inp" data-unit="1"' + (unk ? ' disabled' : '') + '>' +
+      ['ft', 'm', 'inches', 'cm'].map(function (u) { return '<option' + ((s.unit || 'ft') === u ? ' selected' : '') + '>' + u + '</option>'; }).join('') +
+      '</select></label></div>';
+    if (f.req) h += '<label class="check"><input type="checkbox" data-check="sizeUnknown"' + (unk ? ' checked' : '') + '> I\'m not sure of the size, please measure</label>';
+    return h;
+  }
+
+  function field(f) {
+    var h = '<div class="q"><p class="lab">' + esc(f.q) + '</p>';
+    if (f.type === 'chips') h += chips(f.id, f.options, false);
+    else if (f.type === 'multi') h += chips(f.id, f.options, true);
+    else if (f.type === 'size') h += sizeField(f);
+    else if (f.type === 'number') h += '<input class="inp" style="max-width:140px" type="number" inputmode="numeric" min="1" max="100" data-in="' + f.id + '" value="' + esc(state.d[f.id] || '') + '">';
+    else if (f.type === 'area') h += '<textarea class="inp" data-in="' + f.id + '" placeholder="Describe it: what it is for, how it should look">' + esc(state.d[f.id] || '') + '</textarea>';
+    return h + '</div>';
+  }
+
+  function stepPick() {
+    return '<h3>What do you want built?</h3><p class="hint">Tap one to continue.</p><div class="grid">' + ORDER.map(function (k) {
+      var it = ITEMS[k];
+      return '<button type="button" class="svc" data-item="' + k + '"><i class="ti ' + it.icon + '" aria-hidden="true"></i><h3>' + esc(it.label) + '</h3><p>' + esc(it.blurb) + '</p></button>';
+    }).join('') + '</div>';
+  }
+
+  function stepDetails() {
+    var it = ITEMS[state.item];
+    return '<h3>Tell us about your ' + esc(it.label.toLowerCase()) + '</h3>' + it.fields.map(field).join('');
+  }
+
+  function stepMaterial() {
+    return '<h3>Material and finish</h3>' +
+      '<div class="q"><p class="lab">What should it be made of?</p>' + chips('material', MATERIALS[state.item], false) + '</div>' +
+      '<div class="q"><p class="lab">What finish?</p>' + chips('finish', FINISH, false) + '</div>' +
+      '<div class="q"><p class="lab">Your budget (optional)</p>' + chips('budget', BUDGET, false) + '</div>';
+  }
+
+  function stepWorker() {
+    var h = '<h3>Choose a welder</h3><p class="hint">Pick someone who is free now, or let us assign the next available welder.</p>';
+    h += '<button type="button" class="w' + (state.workerId === 'any' ? ' on' : '') + '" data-worker="any"><span class="ic"><i class="ti ti-users" aria-hidden="true"></i></span><span><span class="nm">Any available welder</span><br><span class="sp">We will assign the next free person</span></span></button>';
+    workers.forEach(function (w) {
+      var on = state.workerId === w.id;
+      h += '<button type="button" class="w' + (on ? ' on' : '') + '" data-worker="' + esc(w.id) + '"' + (w.available ? '' : ' disabled') + '>' +
+        '<span class="ic">' + esc((w.name || '?').charAt(0).toUpperCase()) + '</span>' +
+        '<span><span class="nm">' + esc(w.name) + '</span><br><span class="sp">' + esc(w.specialty || 'Welder') + '</span></span>' +
+        '<span class="bd badge ' + (w.available ? 'b-ok' : 'b-busy') + '">' + (w.available ? 'Available' : 'Busy') + '</span></button>';
+    });
+    return h;
+  }
+
+  function summaryRows() {
+    var it = ITEMS[state.item], rows = [['Item', it.label]], det = detailsObj();
+    Object.keys(det).forEach(function (k) { rows.push([k, det[k]]); });
+    if (state.d.material) rows.push(['Material', state.d.material]);
+    if (state.d.finish) rows.push(['Finish', state.d.finish]);
+    if (state.d.budget) rows.push(['Budget', state.d.budget]);
+    var w = findWorker(state.workerId);
+    rows.push(['Welder', w ? w.name : 'Any available welder']);
+    return rows;
+  }
+
+  function thumbsHtml() {
+    if (!state.files.length) return '';
+    return state.files.map(function (f, i) {
+      return '<span class="th"><img src="' + f.url + '" alt="Photo ' + (i + 1) + '">' +
+        '<button type="button" class="thx" data-rm="' + i + '" aria-label="Remove photo">&times;</button></span>';
+    }).join('');
+  }
+
+  function stepContact() {
+    var rows = summaryRows();
+    return '<h3>Your details</h3>' +
+      '<div class="two"><div class="fld"><label class="lab" for="c-name">Your name</label><input class="inp" id="c-name" autocomplete="name" data-in="name" value="' + esc(state.d.name || '') + '"></div>' +
+      '<div class="fld"><label class="lab" for="c-phone">Phone or WhatsApp number</label><input class="inp" id="c-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="081 0628 5867" data-in="phone" value="' + esc(state.d.phone || '') + '"></div></div>' +
+      '<div class="fld"><label class="lab" for="c-loc">Where should it be delivered or fitted?</label><input class="inp" id="c-loc" placeholder="Area and town" data-in="location" value="' + esc(state.d.location || '') + '"></div>' +
+      '<div class="q"><p class="lab">When do you need it? (optional)</p>' + chips('needed', NEEDED, false) + '</div>' +
+      '<div class="fld"><label class="lab" for="c-notes">Anything else we should know? (optional)</label><textarea class="inp" id="c-notes" data-in="notes">' + esc(state.d.notes || '') + '</textarea></div>' +
+      '<div class="fld"><span class="lab" id="c-photos-lab">Add photos or a sketch (optional, up to 3)</span>' +
+      '<input class="inp" id="c-photos" type="file" accept="image/*" multiple aria-labelledby="c-photos-lab">' +
+      '<div class="thumbs" id="thumbs">' + thumbsHtml() + '</div></div>' +
+      '<div class="hp" aria-hidden="true"><label>Leave empty<input id="hp" tabindex="-1" autocomplete="off"></label></div>' +
+      '<p class="lab" style="margin-top:22px">Check your request</p><dl class="rev">' +
+      rows.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl>';
+  }
+
+  function detailsObj() {
+    var it = ITEMS[state.item], out = {};
+    it.fields.forEach(function (f) {
+      var v = state.d[f.id];
+      if (f.type === 'size') {
+        if (state.d.sizeUnknown) { out[f.label] = 'Not sure, please measure'; return; }
+        var s = v || {}, parts = f.dims.map(function (k) { return s[k] || ''; });
+        if (parts.every(Boolean)) out[f.label] = parts.join(' x ') + ' ' + (s.unit || 'ft');
+        return;
+      }
+      if (f.type === 'multi') { if (v && v.length) out[f.label] = v.join(', '); return; }
+      if (v) out[f.label] = trim(v);
+    });
+    return out;
+  }
+
+  function render(focus) {
+    var body = $('#wizBody'), nav = $('#wizNav'), bar = $('#wizBar'), lab = $('#wizLabel');
+    if (done) { renderDone(body, nav, bar, lab, focus); return; }
+    lab.textContent = 'Step ' + (state.step + 1) + ' of ' + STEPS.length + ': ' + STEPS[state.step];
+    bar.innerHTML = STEPS.map(function (_, i) { return '<span class="' + (i < state.step ? 'done' : i === state.step ? 'now' : '') + '"></span>'; }).join('');
+    var h = [stepPick, stepDetails, stepMaterial, stepWorker, stepContact][state.step]();
+    body.innerHTML = h + '<p class="err" id="err" role="alert"></p>';
+    var nb = '';
+    if (state.step > 0) nb += '<button type="button" class="btn btn-quiet" data-nav="back">Back</button>'; else nb += '<span></span>';
+    if (state.step > 0) nb += '<button type="button" class="btn btn-primary" data-nav="next">' + (state.step === 4 ? 'Send request' : 'Next') + '</button>';
+    nav.innerHTML = nb;
+    if (focus) { var hd = body.querySelector('h3'); if (hd) { hd.setAttribute('tabindex', '-1'); hd.focus({ preventScroll: true }); } }
+  }
+
+  function makeRef() {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', out = '', i, n;
+    var arr = window.crypto && window.crypto.getRandomValues ? window.crypto.getRandomValues(new Uint8Array(6)) : null;
+    for (i = 0; i < 6; i++) { n = arr ? arr[i] : Math.floor(Math.random() * 256); out += chars.charAt(n % chars.length); }
+    return 'REQ-' + out;
+  }
+
+  function waLink(row, w) {
+    var num = w ? w.phone : cfg.FALLBACK_WHATSAPP;
+    var lines = ['Hello' + (w ? ' ' + w.name : '') + ', I just sent a build request from your website.', '', 'Reference: ' + row.ref, 'Item: ' + row.item];
+    Object.keys(row.details || {}).forEach(function (k) { lines.push(k + ': ' + row.details[k]); });
+    if (row.material) lines.push('Material: ' + row.material);
+    if (row.finish) lines.push('Finish: ' + row.finish);
+    if (row.budget) lines.push('Budget: ' + row.budget);
+    if (row.needed_by) lines.push('Needed: ' + row.needed_by);
+    lines.push('', 'Name: ' + row.customer_name, 'Location: ' + row.location);
+    if (row.notes) lines.push('Notes: ' + row.notes);
+    return 'https://wa.me/' + API.toIntl(num) + '?text=' + encodeURIComponent(lines.join('\n'));
+  }
+
+  function renderDone(body, nav, bar, lab, focus) {
+    var r = done.row, w = done.worker, url = waLink(r, w);
+    lab.textContent = done.saved ? 'Request sent' : 'Almost done';
+    bar.innerHTML = STEPS.map(function () { return '<span class="done"></span>'; }).join('');
+    body.innerHTML = '<h3>' + (done.saved ? 'Request sent' : 'One more thing') + '</h3>' +
+      (done.saved
+        ? '<p>Your request is saved. Your reference is <span class="ref">' + esc(r.ref) + '</span>.</p>'
+        : '<p class="err">We could not save your request on the website. You can still send it on WhatsApp.</p>') +
+      (done.offered
+        ? '<p>We have offered your job to ' + done.offered + ' available welders. The first one to accept will message you on WhatsApp to agree the price and the date.</p>'
+        : '<p>Next, open WhatsApp to talk with ' + (w ? esc(w.name) : 'the workshop') + ' about the price and the date. Your details are already typed in the message, so you only need to press send.</p>') +
+      '<p style="margin-top:18px"><a class="btn btn-wa" href="' + esc(url) + '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>' + (done.offered ? 'Message the workshop' : 'Continue on WhatsApp') + '</a></p>';
+    nav.innerHTML = '<button type="button" class="btn btn-quiet" data-act="restart">Start another request</button>';
+    if (focus) { var hd = body.querySelector('h3'); if (hd) { hd.setAttribute('tabindex', '-1'); hd.focus({ preventScroll: true }); } }
+  }
+
+  /* ---------- validation ---------- */
+  function validate(step) {
+    var d = state.d, i, f, v;
+    if (step === 0) return state.item ? '' : 'Pick what you want built.';
+    if (step === 1) {
+      var it = ITEMS[state.item];
+      for (i = 0; i < it.fields.length; i++) {
+        f = it.fields[i]; v = d[f.id];
+        if (!f.req) continue;
+        if (f.type === 'size') {
+          if (d.sizeUnknown) continue;
+          var s = v || {};
+          if (!f.dims.every(function (k) { return s[k] && Number(s[k]) > 0; })) return 'Fill in every measurement, or tick "I\'m not sure of the size".';
+        } else if (f.type === 'number') {
+          if (!v || Number(v) < 1) return f.q;
+        } else if (!trim(v)) {
+          return 'Please answer: ' + f.q;
+        }
+      }
+      return '';
+    }
+    if (step === 2) {
+      if (!d.material) return 'Choose a material.';
+      if (!d.finish) return 'Choose a finish.';
+      return '';
+    }
+    if (step === 3) return '';
+    if (step === 4) {
+      if (trim(d.name).length < 2) return 'Enter your name.';
+      var digits = String(d.phone || '').replace(/\D/g, '');
+      if (digits.length < 10 || digits.length > 14) return 'Enter a phone number with at least 10 digits.';
+      if (trim(d.location).length < 3) return 'Enter where it should be delivered or fitted.';
+    }
+    return '';
+  }
+
+  function showErr(msg) {
+    var e = $('#err');
+    if (e) { e.textContent = msg; if (msg && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }); }
+  }
+
+  function scrollTicket() {
+    var t = $('#wizard');
+    if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' });
+  }
+
+  /* ---------- submit ---------- */
+  function submit() {
+    if (sending) return;
+    var hp = $('#hp');
+    if (hp && hp.value) return;
+    sending = true;
+    var btn = $('[data-nav="next"]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+    var it = ITEMS[state.item], w = findWorker(state.workerId);
+    var row = {
+      ref: makeRef(),
+      customer_name: trim(state.d.name),
+      customer_phone: trim(state.d.phone),
+      location: trim(state.d.location),
+      item: it.label,
+      details: detailsObj(),
+      material: state.d.material || null,
+      finish: state.d.finish || null,
+      budget: state.d.budget || null,
+      needed_by: state.d.needed || null,
+      notes: trim(state.d.notes) || null,
+      worker_id: w ? w.id : null,
+      photos: []
+    };
+    function finish(saved, offered) {
+      sending = false;
+      done = { row: row, worker: w, saved: saved, offered: offered || 0 };
+      render(true);
+      scrollTicket();
+    }
+    var files = state.files.map(function (x) { return x.file; });
+    API.uploadPhotos(row.ref, files).catch(function () { return []; }).then(function (urls) {
+      row.photos = urls || [];
+      return API.createRequest(row);
+    }).then(function (savedRow) {
+      if (!w && savedRow && savedRow.id) {
+        var ids = workers.filter(function (x) { return x.available; })
+          .slice(0, 10).map(function (x) { return x.id; });
+        if (ids.length) {
+          API.createOffers(savedRow.id, ids).then(function () {
+            finish(true, ids.length);
+          }).catch(function () { finish(true, 0); });
+          return;
+        }
+      }
+      finish(true, 0);
+    }).catch(function (err) {
+      if (window.console) console.error(err);
+      finish(false, 0);
+    });
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener('click', function (e) {
+    var pick = e.target.closest('[data-pick]');
+    if (pick) {
+      var k = pick.getAttribute('data-pick');
+      if (state.item !== k) { state.item = k; state.d = {}; }
+      done = null;
+      state.step = 1;
+      render(true);
+      scrollTicket();
+    }
+  });
+
+  $('#wizard').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-nav],[data-f],[data-item],[data-worker],[data-act],[data-rm]');
+    if (!t) return;
+
+    if (t.hasAttribute('data-rm')) {
+      var ri = Number(t.getAttribute('data-rm'));
+      var rf = state.files.splice(ri, 1)[0];
+      if (rf) { try { URL.revokeObjectURL(rf.url); } catch (err) {} }
+      render(); return;
+    }
+    if (t.hasAttribute('data-item')) {
+      var k = t.getAttribute('data-item');
+      if (state.item !== k) { state.item = k; state.d = {}; }
+      state.step = 1; render(true); scrollTicket(); return;
+    }
+    if (t.hasAttribute('data-f')) {
+      var f = t.getAttribute('data-f'), v = t.getAttribute('data-v');
+      if (t.getAttribute('data-multi') === '1') {
+        var a = state.d[f] || [], i = a.indexOf(v);
+        if (i > -1) a.splice(i, 1); else a.push(v);
+        state.d[f] = a;
+      } else {
+        state.d[f] = state.d[f] === v ? '' : v;
+      }
+      render(); return;
+    }
+    if (t.hasAttribute('data-worker')) { state.workerId = t.getAttribute('data-worker'); render(); return; }
+    if (t.getAttribute('data-act') === 'restart') { fresh(); render(true); scrollTicket(); return; }
+
+    var nav = t.getAttribute('data-nav');
+    if (nav === 'back') {
+      if (state.step > 0) { state.step--; render(true); scrollTicket(); }
+    } else if (nav === 'next') {
+      var msg = validate(state.step);
+      if (msg) { showErr(msg); return; }
+      if (state.step < 4) { state.step++; render(true); scrollTicket(); } else submit();
+    }
+  });
+
+  $('#wizard').addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.hasAttribute('data-in')) state.d[t.getAttribute('data-in')] = t.value;
+    else if (t.hasAttribute('data-size')) { (state.d.size || (state.d.size = {}))[t.getAttribute('data-size')] = t.value; }
+    else if (t.hasAttribute('data-unit')) { (state.d.size || (state.d.size = {})).unit = t.value; }
+  });
+  $('#wizard').addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.getAttribute('data-check') === 'sizeUnknown') { state.d.sizeUnknown = t.checked; render(); return; }
+    if (t.id === 'c-photos') {
+      var fs = t.files || [];
+      for (var i = 0; i < fs.length && state.files.length < 3; i++) {
+        state.files.push({ file: fs[i], url: URL.createObjectURL(fs[i]) });
+      }
+      render();
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

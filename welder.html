@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Job offer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.bar{background:var(--char);color:#fff;border-bottom:3px solid var(--spark)}
+.bar .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 20px}
+.bar h1{font-size:24px;color:#fff}
+.bar i{color:var(--spark)}
+.page{max-width:720px;margin:0 auto;padding:22px 20px 60px}
+.card{background:var(--paper);border:1.5px solid var(--char);border-radius:var(--radius);padding:20px;margin-top:14px}
+.card h2{font-size:32px;margin-bottom:4px}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:14px 0;font-size:16px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-weight:500;word-break:break-word}
+.phs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
+.phs a{width:96px;height:96px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--line);display:block;background:#fff}
+.phs img{width:100%;height:100%;object-fit:cover}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.err{color:var(--danger);font-weight:600;min-height:1.5em;margin:10px 0 0}
+.st{font-size:14px;font-weight:600;padding:3px 12px;border-radius:20px}
+.st-open{background:#ffe1cf;color:#7a2c00}
+.st-accepted{background:#d6f0df;color:#0d5229}
+.st-declined{background:#f2e3c8;color:#623d00}
+</style>
+</head>
+<body>
+
+<div class="bar"><div class="in">
+  <i class="ti ti-flame" aria-hidden="true"></i>
+  <h1 id="bizName">Job offer</h1>
+</div></div>
+
+<div class="page">
+  <div class="card" id="box">
+    <p class="hint">Loading the job...</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+(function () {
+  'use strict';
+  var cfg = window.SITE_CONFIG || {}, API = window.API;
+  document.title = 'Job offer | ' + (cfg.BUSINESS_NAME || '');
+  document.getElementById('bizName').textContent = cfg.BUSINESS_NAME || 'Job offer';
+
+  function $(s) { return document.querySelector(s); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  var token = (location.search.match(/[?&]token=([^&]+)/) || [])[1] || '';
+  var data = null;
+
+  function detailRows(r) {
+    var rows = [];
+    Object.keys(r.details || {}).forEach(function (k) { rows.push([k, r.details[k]]); });
+    rows = rows.concat([
+      ['Material', r.material], ['Finish', r.finish], ['Budget', r.budget],
+      ['Needed', r.needed_by], ['Area', r.location], ['Customer notes', r.notes]
+    ]);
+    return rows.filter(function (x) { return x[1]; });
+  }
+
+  function renderOpen() {
+    var r = data.request;
+    var kv = detailRows(r).map(function (x) {
+      return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>';
+    }).join('');
+    var phs = (r.photos && r.photos.length)
+      ? '<div class="phs">' + r.photos.map(function (u) {
+          return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" alt="Customer photo"></a>';
+        }).join('') + '</div>'
+      : '';
+    $('#box').innerHTML =
+      '<h2>' + esc(r.item) + ' <span class="st st-open">Open</span></h2>' +
+      '<p class="hint">Hello ' + esc(data.worker.name) + ', this job was sent to you because you are available. Take it and the customer\'s number is yours.</p>' +
+      '<dl class="kv">' + kv + '</dl>' + phs +
+      '<p class="err" id="err" role="alert"></p>' +
+      '<div class="row">' +
+      '<button type="button" class="btn btn-primary" id="yes"><i class="ti ti-check" aria-hidden="true"></i>I\'ll take this job</button>' +
+      '<button type="button" class="btn btn-quiet" id="no">Not for me</button>' +
+      '</div>';
+    $('#yes').addEventListener('click', function () { respond(true); });
+    $('#no').addEventListener('click', function () { respond(false); });
+  }
+
+  function renderDone(res) {
+    var r = res.request || (data && data.request) || {};
+    var refTxt = r.ref ? ' (' + esc(r.ref) + ')' : '';
+    if (res.error === 'taken') {
+      $('#box').innerHTML = '<h2>Too late</h2><p>Another welder already took this job' + refTxt + '. The next one is yours if you are quick.</p>';
+      return;
+    }
+    if (res.error === 'declined' || res.error === 'accepted') {
+      $('#box').innerHTML = '<h2>Already answered</h2><p>You already answered this offer' + refTxt + '. Nothing more to do here.</p>';
+      return;
+    }
+    if (res.error) {
+      $('#box').innerHTML = '<h2>Link not valid</h2><p>This offer link is not valid any more. Ask the workshop to send it again.</p>';
+      return;
+    }
+    if (res.status === 'accepted') {
+      var wa = 'https://wa.me/' + API.toIntl(r.customer_phone) + '?text=' + encodeURIComponent(
+        'Hello ' + r.customer_name + ', this is ' + (data ? data.worker.name : 'your welder') +
+        ' from ' + (cfg.BUSINESS_NAME || 'the workshop') + '. I took your request ' + r.ref + ' (' + r.item + ').');
+      $('#box').innerHTML = '<h2>Job is yours <span class="st st-accepted">Accepted</span></h2>' +
+        '<p>Request ' + esc(r.ref) + ' is now assigned to you. Message ' + esc(r.customer_name) + ' to agree the price and the date.</p>' +
+        '<p style="margin-top:14px"><a class="btn btn-wa" href="' + esc(wa) + '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>Message ' + esc(r.customer_name) + '</a></p>';
+      return;
+    }
+    $('#box').innerHTML = '<h2>No problem <span class="st st-declined">Declined</span></h2>' +
+      '<p>Thanks for answering. The job stays open for the other welders.</p>';
+  }
+
+  function respond(accept) {
+    var yes = $('#yes'), no = $('#no');
+    if (yes) yes.disabled = true;
+    if (no) no.disabled = true;
+    API.respondOffer(token, accept).then(function (res) {
+      renderDone(res);
+    }).catch(function () {
+      if (yes) yes.disabled = false;
+      if (no) no.disabled = false;
+      var e = $('#err');
+      if (e) e.textContent = 'Could not reach the website. Check your internet and try again.';
+    });
+  }
+
+  if (!token) {
+    $('#box').innerHTML = '<h2>Link not valid</h2><p>Open this page from the link the workshop sent you.</p>';
+  } else {
+    API.getOffer(token).then(function (d) {
+      data = d;
+      if (!d) {
+        $('#box').innerHTML = '<h2>Link not valid</h2><p>This offer link is not valid any more. Ask the workshop to send it again.</p>';
+        return;
+      }
+      if (d.offer.status === 'open') renderOpen();
+      else if (d.offer.status === 'accepted') renderDone({ error: 'accepted', request: d.request });
+      else renderDone({ error: 'declined', request: d.request });
+    }).catch(function () {
+      $('#box').innerHTML = '<h2>Could not load</h2><p>Check your internet and open the link again.</p>';
+    });
+  }
+})();
+</script>
+</body>
+</html>

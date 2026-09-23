@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Owner dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#24211f">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+.bar{background:var(--char);color:#fff;border-bottom:3px solid var(--spark)}
+.bar .in{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
+.bar h1{font-size:26px;color:#fff;display:flex;align-items:center;gap:10px}
+.bar h1 i{color:var(--spark)}
+.bar .acts{display:flex;gap:8px;flex-wrap:wrap}
+.page{max-width:1080px;margin:0 auto;padding:22px 20px 60px}
+
+.login{max-width:420px;margin:56px auto;background:var(--paper);border:1.5px solid var(--char);border-radius:var(--radius);padding:26px}
+.login h1{font-size:38px;margin-bottom:6px}
+.login .crown{display:inline-flex;align-items:center;gap:8px;background:var(--char);color:#fff;font-size:14px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:14px}
+.fld{margin:0 0 14px}
+.err{color:var(--danger);font-weight:600;min-height:1.5em;margin:0 0 8px}
+
+/* stat strip */
+.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:0 0 20px}
+.stat{background:var(--char);color:#fff;border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;right:-18px;top:-18px;width:70px;height:70px;border-radius:50%;background:rgba(232,89,12,.25)}
+.stat b{display:block;font-family:var(--font-head);font-size:46px;line-height:1}
+.stat span{font-size:15px;color:#d2cac2}
+.stat.hot b{color:#ffb27a}
+
+.tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap;align-items:center}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.tools .inp{flex:1;min-width:200px}
+.counts{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:16px}
+.count{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius);padding:12px 14px;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.count b{display:block;font-family:var(--font-head);font-size:38px;line-height:1}
+.count span{font-size:15px;color:var(--muted)}
+.count.on{border-color:var(--char);box-shadow:inset 0 0 0 1.5px var(--char)}
+
+.req{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius);margin-bottom:10px}
+.req[open]{border-color:var(--char)}
+.req summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;cursor:pointer;list-style:none}
+.req summary::-webkit-details-marker{display:none}
+.req .main{flex:1;min-width:200px}
+.req .main strong{font-size:18px}
+.req .meta{color:var(--muted);font-size:14px}
+.st{font-size:13px;font-weight:600;padding:3px 12px;border-radius:20px;white-space:nowrap}
+.st-new{background:#ffe1cf;color:#7a2c00}
+.st-quoted{background:#dbe7fb;color:#12336b}
+.st-prog{background:#f7ebbd;color:#5c4400}
+.st-done{background:#d6f0df;color:#0d5229}
+.body{padding:4px 16px 16px;border-top:1.5px dashed var(--line)}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:14px 0;font-size:15px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-weight:500;word-break:break-word}
+.phs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
+.phs a{width:92px;height:92px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--line);display:block;background:#fff}
+.phs img{width:100%;height:100%;object-fit:cover}
+.offs{display:flex;flex-direction:column;gap:6px;margin:4px 0 12px}
+.off{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--line);border-radius:var(--radius);padding:6px 10px;font-size:13px}
+.edit{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:6px}
+.edit .wide{grid-column:1/-1}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.empty{padding:28px;text-align:center;color:var(--muted);background:var(--paper);border:1.5px dashed var(--line);border-radius:var(--radius)}
+.wk{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius);padding:12px 16px;margin-bottom:10px}
+.wk .main{flex:1;min-width:180px}
+.addw{background:var(--paper);border:1.5px solid var(--char);border-radius:var(--radius);padding:16px;margin-top:18px}
+.addw h2{font-size:26px;margin-bottom:10px}
+
+.panel{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.panel h2{font-size:28px;margin-bottom:6px}
+.panel h3{font-size:22px;margin:18px 0 8px}
+.inv{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--char);color:#fff;border-radius:var(--radius);padding:14px 16px;margin:12px 0}
+.inv[hidden]{display:none}
+.inv code{font-family:ui-monospace,Consolas,monospace;font-size:30px;letter-spacing:.18em;font-weight:700}
+.tm{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius);padding:12px 16px;margin-bottom:10px}
+.tm .main{flex:1;min-width:200px}
+.q{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--paper);border-left:6px solid var(--spark);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px}
+.q .main{flex:1;min-width:220px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--char);color:#fff;padding:10px 18px;border-radius:var(--radius);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;max-width:90vw}
+.toast.show{opacity:1}
+.toast.bad{background:var(--danger)}
+.demo{background:#fff3cd;color:#5c4400;padding:10px 14px;border-radius:var(--radius);font-size:15px;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<div id="loginView" hidden>
+  <form class="login" id="loginForm" autocomplete="on">
+    <span class="crown"><i class="ti ti-crown" aria-hidden="true"></i> Owner only</span>
+    <h1>Owner</h1>
+    <p class="hint">Sign in to run the site: staff, welders, sign-ups and every request.</p>
+    <div class="demo" id="loginDemo" hidden>Demo mode: type anything to sign in.</div>
+    <div class="fld"><label class="lab" for="em">Email</label><input class="inp" id="em" type="email" autocomplete="username"></div>
+    <div class="fld"><label class="lab" for="pw">Password</label><input class="inp" id="pw" type="password" autocomplete="current-password"></div>
+    <p class="err" id="loginErr" role="alert"></p>
+    <button class="btn btn-primary" type="submit" style="width:100%"><i class="ti ti-crown" aria-hidden="true"></i>Sign in as owner</button>
+    <p class="hint" style="margin-top:14px;border-top:1.5px dashed var(--line);padding-top:12px">
+      Staff member? <a href="admin.html">Staff login</a><br>
+      Welder? <a href="welder.html">Welder sign in</a><br>
+      <a href="index.html">Back to the website</a>
+    </p>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <div class="bar"><div class="in">
+    <h1><i class="ti ti-crown" aria-hidden="true"></i><span id="bizName">Owner</span></h1>
+    <div class="acts">
+      <a class="btn btn-ghost btn-sm" href="index.html">View website</a>
+      <button class="btn btn-ghost btn-sm" id="refresh" type="button"><i class="ti ti-refresh" aria-hidden="true"></i>Refresh</button>
+      <button class="btn btn-ghost btn-sm" id="logout" type="button">Sign out</button>
+    </div>
+  </div></div>
+  <div class="page">
+    <div class="demo" id="appDemo" hidden>Demo mode: data is saved only in this browser.</div>
+    <div class="stats" id="stats"></div>
+    <div class="tabs">
+      <button class="chip on" id="tabReq" type="button" data-tab="requests"><i class="ti ti-file-invoice" aria-hidden="true"></i> Requests</button>
+      <button class="chip" id="tabWk" type="button" data-tab="welders"><i class="ti ti-tool" aria-hidden="true"></i> Welders</button>
+      <button class="chip" id="tabTeam" type="button" data-tab="team"><i class="ti ti-users" aria-hidden="true"></i> Staff</button>
+      <button class="chip" id="tabQ" type="button" data-tab="queue"><i class="ti ti-user-plus" aria-hidden="true"></i> Sign-ups <span id="qCount" class="badge b-busy" hidden>0</span></button>
+    </div>
+
+    <div id="reqView">
+      <div class="counts" id="counts"></div>
+      <div class="tools"><input class="inp" id="search" type="search" placeholder="Search by name, phone, item or reference" aria-label="Search requests"></div>
+      <div id="list"></div>
+    </div>
+
+    <div id="wkView" hidden>
+      <div id="wkList"></div>
+      <form class="addw" id="addW">
+        <h2>Add a welder</h2>
+        <div class="edit">
+          <div><label class="lab" for="wn">Name</label><input class="inp" id="wn" required></div>
+          <div><label class="lab" for="wp">WhatsApp number</label><input class="inp" id="wp" type="tel" placeholder="081 0628 5867" required></div>
+          <div class="wide"><label class="lab" for="ws">What they are best at (optional)</label><input class="inp" id="ws" placeholder="Gates and doors"></div>
+        </div>
+        <p class="hint" id="wHint" style="margin-top:8px">They then sign up themselves at <a href="welder.html">welder.html</a> using this number.</p>
+        <p class="err" id="wErr" role="alert" style="margin-top:8px"></p>
+        <button class="btn btn-primary" type="submit">Add welder</button>
+      </form>
+    </div>
+
+    <div id="teamView" hidden>
+      <div class="panel">
+        <h2>Invite a staff member</h2>
+        <p class="hint">Give this one-time code to someone you trust. They sign in at the staff login with their own email, enter the code once, and from then on they can handle requests and add welders.</p>
+        <div class="row" style="margin-top:4px">
+          <button class="btn btn-primary" id="mkInvite" type="button"><i class="ti ti-key" aria-hidden="true"></i>Create invite code</button>
+        </div>
+        <div class="inv" id="invBox" hidden>
+          <code id="invCode"></code>
+          <button class="btn btn-ghost btn-sm" id="copyInv" type="button"><i class="ti ti-copy" aria-hidden="true"></i>Copy</button>
+        </div>
+        <p class="err" id="invErr" role="alert"></p>
+        <h3>People with access</h3>
+        <div id="teamList"></div>
+        <h3>Codes you have made</h3>
+        <div id="invList"></div>
+      </div>
+    </div>
+
+    <div id="queueView" hidden>
+      <div class="panel">
+        <h2>Sign-ups waiting</h2>
+        <h3>Staff applications</h3>
+        <p class="hint">People who chose "Sign up as staff" at the staff login. Approving one gives them access to the staff area straight away.</p>
+        <div id="sqList"></div>
+        <h3>Welder sign-ups</h3>
+        <p class="hint">These people signed up but their WhatsApp number is not on your welder list yet. Approving one adds them as a welder and lets them sign in straight away.</p>
+        <div id="qList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+</script>
+<script>
+(function () {
+  'use strict';
+  var cfg = window.SITE_CONFIG || {}, API = window.API;
+  var STATUSES = ['New', 'Quoted', 'In progress', 'Done'];
+  var S = { reqs: [], workers: [], offers: [], team: [], invites: [], queue: [], squeue: [], filter: 'All', q: '', tab: 'requests', open: {}, me: '' };
+
+  function $(s) { return document.querySelector(s); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function trim(s) { return String(s || '').replace(/^\s+|\s+$/g, ''); }
+  function toast(msg, bad) {
+    var t = $('#toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (bad ? ' bad' : '');
+    clearTimeout(toast.t);
+    toast.t = setTimeout(function () { t.className = 'toast'; }, 3200);
+  }
+  function fmt(iso) {
+    try { return new Date(iso).toLocaleString('en-NG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+    catch (e) { return iso || ''; }
+  }
+  function stClass(s) { return s === 'New' ? 'st-new' : s === 'Quoted' ? 'st-quoted' : s === 'In progress' ? 'st-prog' : 'st-done'; }
+  function workerName(id) {
+    for (var i = 0; i < S.workers.length; i++) if (S.workers[i].id === id) return S.workers[i].name;
+    return '';
+  }
+  function acctBadge(w) {
+    if (w.account_status === 'active') return '<span class="badge b-ok">Login active</span>';
+    if (w.account_status === 'pending') return '<span class="badge b-busy">Sign-up waiting</span>';
+    return '<span class="badge" style="background:#eee9e3;color:#5f5953">No login yet</span>';
+  }
+
+  document.title = 'Owner dashboard | ' + (cfg.BUSINESS_NAME || '');
+  $('#bizName').textContent = cfg.BUSINESS_NAME || 'Owner';
+  if (API.demo) { $('#loginDemo').hidden = false; $('#appDemo').hidden = false; }
+
+  function showLogin() { $('#app').hidden = true; $('#loginView').hidden = false; }
+  function showApp() {
+    $('#loginView').hidden = true; $('#app').hidden = false;
+    API.getSession().then(function (s) {
+      S.me = (s && s.user && s.user.email) ? s.user.email : '';
+    }).catch(function () { S.me = ''; });
+    loadAll();
+    startLive();
+  }
+
+  $('#loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var err = $('#loginErr'); err.textContent = '';
+    API.signIn(trim($('#em').value), $('#pw').value).then(function () {
+      $('#pw').value = '';
+      if (API.demo) { showApp(); return; }
+      return API.getMyRole().then(function (role) {
+        if (role === 'owner') { showApp(); return; }
+        if (role === 'staff') { location.replace('admin.html'); return; }
+        if (role === 'welder') { location.replace('welder.html'); return; }
+        API.signOut().then(function () {
+          err.textContent = 'This login is not one of the owner accounts.';
+          showLogin();
+        });
+      }).catch(function () {
+        API.signOut().then(function () {
+          err.textContent = 'The database is not set up yet. Run supabase-setup.sql in Supabase, then try again.';
+          showLogin();
+        });
+      });
+    }).catch(function () { err.textContent = 'That email or password is wrong. Try again.'; });
+  });
+  $('#logout').addEventListener('click', function () { API.signOut().then(showLogin); });
+
+  /* ---------------- load ---------------- */
+  function loadAll() {
+    return Promise.all([
+      API.listRequests(), API.getWorkersTeam(), API.listTeam(),
+      API.listInvites(), API.listSignups(), API.listStaffSignups(),
+      API.listWorkerPhotos()
+    ]).then(function (r) {
+      S.reqs = r[0] || [];
+      S.workers = r[1] || [];
+      S.team = r[2] || [];
+      S.invites = r[3] || [];
+      S.queue = (r[4] || []).filter(function (x) { return x.status === 'pending'; });
+      S.squeue = (r[5] || []).filter(function (x) { return x.status === 'pending'; });
+      S.pf = r[6] || [];
+      return API.listOffers(S.reqs.map(function (x) { return x.id; }));
+    }).then(function (o) {
+      S.offers = o || [];
+      render();
+    }).catch(function (err) {
+      if (window.console) console.error(err);
+      toast('Could not load. Check your internet and press Refresh.', true);
+    });
+  }
+  $('#refresh').addEventListener('click', function () { loadAll().then(function () { toast('Updated'); }); });
+
+  function render() {
+    renderStats();
+    $('#tabReq').className = 'chip' + (S.tab === 'requests' ? ' on' : '');
+    $('#tabWk').className = 'chip' + (S.tab === 'welders' ? ' on' : '');
+    $('#tabTeam').className = 'chip' + (S.tab === 'team' ? ' on' : '');
+    $('#tabQ').className = 'chip' + (S.tab === 'queue' ? ' on' : '');
+    $('#reqView').hidden = S.tab !== 'requests';
+    $('#wkView').hidden = S.tab !== 'welders';
+    $('#teamView').hidden = S.tab !== 'team';
+    $('#queueView').hidden = S.tab !== 'queue';
+    if (S.tab === 'requests') { renderCounts(); renderList(); }
+    else if (S.tab === 'welders') renderWorkers();
+    else if (S.tab === 'team') renderTeam();
+    else renderQueue();
+  }
+
+  function renderStats() {
+    var newN = S.reqs.filter(function (r) { return r.status === 'New'; }).length;
+    var open = S.reqs.filter(function (r) { return r.status !== 'Done'; }).length;
+    var busy = S.workers.filter(function (w) { return w.available; }).length;
+    var waiting = S.queue.length + S.squeue.length;
+    $('#stats').innerHTML =
+      '<div class="stat' + (newN ? ' hot' : '') + '"><b>' + newN + '</b><span>New requests</span></div>' +
+      '<div class="stat"><b>' + open + '</b><span>Jobs in progress</span></div>' +
+      '<div class="stat"><b>' + busy + '/' + S.workers.length + '</b><span>Welders free</span></div>' +
+      '<div class="stat' + (waiting ? ' hot' : '') + '"><b>' + waiting + '</b><span>Sign-ups waiting</span></div>' +
+      '<div class="stat"><b>' + S.team.length + '</b><span>Staff on the team</span></div>';
+    var qc = $('#qCount');
+    qc.textContent = waiting;
+    qc.hidden = !waiting;
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-tab]');
+    if (!t) return;
+    S.tab = t.getAttribute('data-tab');
+    render();
+  });
+
+  /* ---------------- requests ---------------- */
+  function renderCounts() {
+    var h = '<button type="button" class="count' + (S.filter === 'All' ? ' on' : '') + '" data-filter="All"><b>' + S.reqs.length + '</b><span>All requests</span></button>';
+    STATUSES.forEach(function (s) {
+      var n = S.reqs.filter(function (r) { return r.status === s; }).length;
+      h += '<button type="button" class="count' + (S.filter === s ? ' on' : '') + '" data-filter="' + esc(s) + '"><b>' + n + '</b><span>' + esc(s) + '</span></button>';
+    });
+    $('#counts').innerHTML = h;
+  }
+
+  function matches(r) {
+    if (S.filter !== 'All' && r.status !== S.filter) return false;
+    if (!S.q) return true;
+    var hay = [r.customer_name, r.customer_phone, r.item, r.ref, r.location].join(' ').toLowerCase();
+    return hay.indexOf(S.q) > -1;
+  }
+
+  function reqCard(r) {
+    var rows = [];
+    Object.keys(r.details || {}).forEach(function (k) { rows.push([k, r.details[k]]); });
+    rows = rows.concat([['Material', r.material], ['Finish', r.finish], ['Budget', r.budget], ['Needed', r.needed_by], ['Phone', API.formatDisplay(r.customer_phone) || r.customer_phone], ['Location', r.location], ['Customer notes', r.notes]]);
+    var offs = S.offers.filter(function (o) { return o.request_id === r.id; });
+    var base = location.origin + location.pathname.replace(/[^/]*$/, 'welder.html');
+    function waFor(o) {
+      var wk = null;
+      for (var i = 0; i < S.workers.length; i++) if (S.workers[i].id === o.worker_id) wk = S.workers[i];
+      if (!wk || !API.isValidNgPhone(wk.phone)) return '';
+      var msg = 'Hi ' + wk.name + ', new job from ' + (cfg.BUSINESS_NAME || 'the workshop') + ': ' +
+        (r.item || 'job') + ' (' + (r.ref || '') + '). Accept here: ' + base + '?token=' + o.token;
+      return '<a class="btn btn-wa btn-sm" href="https://wa.me/' + API.toIntl(wk.phone) + '?text=' + encodeURIComponent(msg) +
+        '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>Send on WhatsApp</a>';
+    }
+    var offHtml = offs.length
+      ? '<div class="offs">' + offs.map(function (o) {
+          return '<div class="off"><span>' + esc(workerName(o.worker_id)) + ' &mdash; ' + esc(o.status) + '</span>' +
+            (o.status === 'open'
+              ? '<span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' + waFor(o) +
+                '<button type="button" class="btn btn-quiet btn-sm" data-act="copy-link" data-link="' + esc(base + '?token=' + o.token) + '"><i class="ti ti-link" aria-hidden="true"></i>Copy link</button></span>'
+              : '<span class="meta">' + (o.status === 'accepted' ? 'job assigned' : 'passed') + '</span>') +
+            '</div>';
+        }).join('') + '</div>'
+      : '';
+    var kv = rows.filter(function (x) { return x[1]; }).map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('');
+    var wOpts = '<option value="">Not assigned</option>' + S.workers.map(function (w) {
+      return '<option value="' + esc(w.id) + '"' + (w.id === r.worker_id ? ' selected' : '') + '>' + esc(w.name) + (w.available ? '' : ' (busy)') + '</option>';
+    }).join('');
+    var sOpts = STATUSES.map(function (s) { return '<option' + (s === r.status ? ' selected' : '') + '>' + s + '</option>'; }).join('');
+    var msg = 'Hello ' + r.customer_name + ', this is ' + (cfg.BUSINESS_NAME || 'the workshop') + ' about your request ' + r.ref + ' (' + (r.item || 'build') + ').';
+    var wa = 'https://wa.me/' + API.toIntl(r.customer_phone) + '?text=' + encodeURIComponent(msg);
+    var who = workerName(r.worker_id);
+    var phs = (r.photos && r.photos.length)
+      ? '<div class="phs">' + r.photos.map(function (u) {
+          return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" alt="Customer photo"></a>';
+        }).join('') + '</div>'
+      : '';
+    return '<details class="req" data-id="' + esc(r.id) + '"' + (S.open[r.id] ? ' open' : '') + '>' +
+      '<summary><span class="main"><strong>' + esc(r.item) + '</strong> for ' + esc(r.customer_name) + '<br><span class="meta">' + esc(r.ref) + ', ' + esc(fmt(r.created_at)) + (who ? ', ' + esc(who) : '') + '</span></span>' +
+      '<span class="st ' + stClass(r.status) + '">' + esc(r.status) + '</span></summary>' +
+      '<div class="body"><dl class="kv">' + kv + '</dl>' + phs + offHtml +
+      '<div class="edit">' +
+      '<div><label class="lab">Status</label><select class="inp" data-k="status">' + sOpts + '</select></div>' +
+      '<div><label class="lab">Assigned welder</label><select class="inp" data-k="worker_id">' + wOpts + '</select></div>' +
+      '<div class="wide"><label class="lab">Quote (naira)</label><input class="inp" data-k="quote_amount" value="' + esc(r.quote_amount || '') + '" placeholder="120,000"></div>' +
+      '<div class="wide"><label class="lab">Notes</label><textarea class="inp" data-k="admin_notes">' + esc(r.admin_notes || '') + '</textarea></div>' +
+      '</div><div class="row">' +
+      '<button type="button" class="btn btn-primary" data-act="save">Save changes</button>' +
+      '<a class="btn btn-wa" href="' + esc(wa) + '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>Message customer</a>' +
+      '<button type="button" class="btn btn-danger" data-act="delete" style="margin-left:auto">Delete</button>' +
+      '</div></div></details>';
+  }
+
+  function renderList() {
+    var list = S.reqs.filter(matches);
+    if (!list.length) {
+      $('#list').innerHTML = '<div class="empty">' + (S.reqs.length ? 'No requests match this filter.' : 'No requests yet. When a customer sends one from the website, it will appear here.') + '</div>';
+      return;
+    }
+    $('#list').innerHTML = list.map(reqCard).join('');
+  }
+
+  /* ---------------- welders ---------------- */
+  function renderWorkers() {
+    if (!S.workers.length) { $('#wkList').innerHTML = '<div class="empty">No welders yet. Add one below so customers can choose them.</div>'; return; }
+    $('#wkList').innerHTML = S.workers.map(function (w) {
+      var numOk = API.isValidNgPhone(w.phone);
+      var num = numOk ? API.formatDisplay(w.phone) : esc(w.phone);
+      var ph = (S.pf || []).filter(function (p) { return p.worker_id === w.id; });
+      var pinRow = (w.claim_pin && w.account_status !== 'active')
+        ? '<br><span class="meta">Setup code for ' + esc(w.name) + ': <strong style="letter-spacing:2px">' + esc(w.claim_pin) + '</strong> - read it out when they sign up at welder.html</span>'
+        : '';
+      return '<div class="wk"><div class="main"><strong>' + esc(w.name) + '</strong><br><span class="meta">' + num + (w.specialty ? ', ' + esc(w.specialty) : '') + '</span>' +
+        pinRow +
+        (numOk ? '' : '<br><span class="err" style="margin-top:4px">Number too short for WhatsApp. Remove and add again with 11 digits.</span>') +
+        '</div>' + acctBadge(w) +
+        '<span class="badge ' + (w.available ? 'b-ok' : 'b-busy') + '">' + (w.available ? 'Available' : 'Busy') + '</span>' +
+        '<span class="badge" style="background:' + (ph.length >= 3 ? '#e2f2e5;color:#1d5a2c' : '#f3d9d4;color:#8c2f22') + '">' +
+        ph.length + (ph.length === 1 ? ' photo' : ' photos') + (ph.length >= 3 ? ' - live' : ' - hidden') + '</span>' +
+        (ph.length ? '<span style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">' +
+          ph.slice(0, 4).map(function (p) {
+            return '<img src="' + esc(p.url) + '" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:6px;border:1.5px solid var(--line)">';
+          }).join('') + (ph.length > 4 ? '<span class="meta">+' + (ph.length - 4) + '</span>' : '') + '</span>' : '') +
+        '<button type="button" class="btn btn-quiet btn-sm" data-act="toggle-w" data-id="' + esc(w.id) + '" data-avail="' + (w.available ? 1 : 0) + '">' + (w.available ? 'Mark as busy' : 'Mark as available') + '</button>' +
+        (numOk ? '<a class="btn btn-wa btn-sm" href="https://wa.me/' + API.toIntl(w.phone) + '?text=' + encodeURIComponent('Hello ' + w.name + ', this is ' + (cfg.BUSINESS_NAME || 'the workshop') + '.') + '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>WhatsApp</a>' : '') +
+        '<button type="button" class="btn btn-danger btn-sm" data-act="delete-w" data-id="' + esc(w.id) + '">Remove</button></div>';
+    }).join('');
+  }
+
+  /* ---------------- team ---------------- */
+  function renderTeam() {
+    if (!S.team.length) { $('#teamList').innerHTML = '<div class="empty">Nobody on the team yet.</div>'; }
+    else {
+      $('#teamList').innerHTML = S.team.map(function (m) {
+        var mine = m.email && m.email.toLowerCase() === (S.me || '').toLowerCase();
+        return '<div class="tm"><div class="main"><strong>' + esc(m.email) + '</strong><br><span class="meta">joined ' + esc(fmt(m.created_at)) + '</span></div>' +
+          '<span class="badge ' + (m.role === 'owner' ? 'b-ok' : '') + '" ' + (m.role === 'owner' ? '' : 'style="background:#dbe7fb;color:#12336b"') + '>' + esc(m.role === 'owner' ? 'Owner' : 'Staff') + '</span>' +
+          (m.role === 'owner' || mine ? '' : '<button type="button" class="btn btn-danger btn-sm" data-act="del-team" data-email="' + esc(m.email) + '">Remove access</button>') +
+          '</div>';
+      }).join('');
+    }
+    if (!S.invites.length) { $('#invList').innerHTML = '<div class="empty">No codes yet.</div>'; }
+    else {
+      $('#invList').innerHTML = S.invites.map(function (i) {
+        return '<div class="tm"><div class="main"><code style="font-size:18px;letter-spacing:.1em">' + esc(i.code) + '</code><br>' +
+          '<span class="meta">made ' + esc(fmt(i.created_at)) + '</span></div>' +
+          (i.used_at
+            ? '<span class="badge b-ok">Used ' + esc(fmt(i.used_at)) + '</span>'
+            : '<span class="badge b-busy">Not used yet</span>') +
+          '</div>';
+      }).join('');
+    }
+  }
+
+  /* ---------------- approval queue ---------------- */
+  function renderQueue() {
+    var sq = S.squeue || [];
+    if (!sq.length) {
+      $('#sqList').innerHTML = '<div class="empty">No staff applications waiting.</div>';
+    } else {
+      $('#sqList').innerHTML = sq.map(function (s) {
+        return '<div class="q" data-id="' + esc(s.id) + '">' +
+          '<div class="main"><strong>' + esc(s.name) + '</strong><br>' +
+          '<span class="meta">' + esc(s.email) + ' &middot; asked ' + esc(fmt(s.created_at)) + '</span></div>' +
+          '<button type="button" class="btn btn-primary btn-sm" data-act="approve-st" data-id="' + esc(s.id) + '"><i class="ti ti-check" aria-hidden="true"></i>Approve</button>' +
+          '<button type="button" class="btn btn-danger btn-sm" data-act="reject-st" data-id="' + esc(s.id) + '">Reject</button>' +
+          '</div>';
+      }).join('');
+    }
+    if (!S.queue.length) {
+      $('#qList').innerHTML = '<div class="empty">No sign-ups waiting. Everyone who signed up already had their number on the welder list.</div>';
+      return;
+    }
+    $('#qList').innerHTML = S.queue.map(function (s) {
+      var sPh = (s.photos && s.photos.length) ? s.photos : [];
+      return '<div class="q" data-id="' + esc(s.id) + '">' +
+        '<div class="main"><strong>' + esc(s.name) + '</strong><br>' +
+        '<span class="meta">' + esc(API.formatDisplay(s.phone) || s.phone) + ' &middot; ' + esc(s.email) + ' &middot; asked ' + esc(fmt(s.created_at)) + '</span>' +
+        (sPh.length
+          ? '<br><span style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:6px">' +
+            sPh.slice(0, 5).map(function (u) {
+              return '<img src="' + esc(u) + '" alt="Applicant work" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1.5px solid var(--line)">';
+            }).join('') + '<span class="meta">' + sPh.length + ' work photo' + (sPh.length === 1 ? '' : 's') + (sPh.length >= 3 ? ' - meets the requirement' : ' - needs 3 to go live') + '</span></span>'
+          : '<br><span class="hint" style="margin-top:6px">No work photos on this application</span>') +
+        '</div>' +
+        '<button type="button" class="btn btn-primary btn-sm" data-act="approve" data-id="' + esc(s.id) + '"><i class="ti ti-check" aria-hidden="true"></i>Approve</button>' +
+        '<button type="button" class="btn btn-danger btn-sm" data-act="reject" data-id="' + esc(s.id) + '">Reject</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  // Staff applications: approve or reject from the same queue tab.
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-act="approve-st"],[data-act="reject-st"]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-act');
+    var sid = btn.getAttribute('data-id');
+    btn.disabled = true;
+    var p = act === 'approve-st' ? API.approveStaffSignup(sid) : API.rejectStaffSignup(sid);
+    p.then(function () {
+      toast(act === 'approve-st' ? 'Staff approved - they can sign in now' : 'Application rejected');
+      return loadAll();
+    }).catch(function () { btn.disabled = false; toast('Could not save that. Try again.', true); });
+  });
+
+  $('#mkInvite').addEventListener('click', function () {
+    var err = $('#invErr'); err.textContent = '';
+    var b = this; b.disabled = true;
+    API.createInvite().then(function (r) {
+      b.disabled = false;
+      $('#invCode').textContent = r.code;
+      $('#invBox').hidden = false;
+      toast('Invite code ready');
+      return loadAll();
+    }).catch(function (e) {
+      b.disabled = false;
+      var m = (e && e.message) ? String(e.message) : '';
+      if (m.indexOf('owner only') > -1)
+        err.textContent = 'Only the owner account can create codes. Sign in as the owner email, then try again.';
+      else if (/jwt|token|401|403|unauthorized/i.test(m))
+        err.textContent = 'Your session expired. Refresh the page, sign in again, then retry.';
+      else if (/failed to fetch|network/i.test(m))
+        err.textContent = 'Could not reach the server. Check your internet and try again.';
+      else
+        err.textContent = 'Could not make a code. The server said: ' + (m || 'unknown error');
+    });
+  });
+  $('#copyInv').addEventListener('click', function () {
+    var code = $('#invCode').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(function () { toast('Copied'); });
+    else window.prompt('Copy this code:', code);
+  });
+
+  $('#search').addEventListener('input', function () { S.q = trim(this.value).toLowerCase(); renderList(); });
+
+  /* ---------------- clicks ---------------- */
+  document.addEventListener('click', function (e) {
+    var f = e.target.closest('[data-filter]');
+    if (f) { S.filter = f.getAttribute('data-filter'); renderCounts(); renderList(); return; }
+
+    var btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-act');
+    var card = btn.closest('.req');
+
+    if (act === 'copy-link') {
+      var url = btn.getAttribute('data-link');
+      var old = btn.innerHTML;
+      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.innerHTML = old; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, function () { window.prompt('Copy this link:', url); });
+      else window.prompt('Copy this link:', url);
+      return;
+    }
+    if (act === 'save' && card) {
+      var patch = {
+        status: card.querySelector('[data-k="status"]').value,
+        worker_id: card.querySelector('[data-k="worker_id"]').value || null,
+        quote_amount: trim(card.querySelector('[data-k="quote_amount"]').value) || null,
+        admin_notes: trim(card.querySelector('[data-k="admin_notes"]').value) || null
+      };
+      btn.disabled = true;
+      API.updateRequest(card.getAttribute('data-id'), patch).then(function () { toast('Saved'); return loadAll(); })
+        .catch(function () { btn.disabled = false; toast('Could not save. Try again.', true); });
+    }
+    if (act === 'delete' && card) {
+      if (!window.confirm('Delete this request for good?')) return;
+      var did = card.getAttribute('data-id');
+      API.deleteRequest(did).then(function () { delete S.open[did]; toast('Deleted'); return loadAll(); })
+        .catch(function () { toast('Could not delete. Try again.', true); });
+    }
+    if (act === 'toggle-w') {
+      var wid = btn.getAttribute('data-id'), cur = btn.getAttribute('data-avail') === '1';
+      API.updateWorker(wid, { available: !cur }).then(loadAll).catch(function () { toast('Could not update. Try again.', true); });
+    }
+    if (act === 'delete-w') {
+      if (!window.confirm('Remove this welder? Past requests stay, but show as not assigned.')) return;
+      API.deleteWorker(btn.getAttribute('data-id')).then(function () { toast('Welder removed'); return loadAll(); })
+        .catch(function () { toast('Could not remove. Try again.', true); });
+    }
+    if (act === 'del-team') {
+      var em = btn.getAttribute('data-email');
+      if (!window.confirm('Remove ' + em + ' from the team? They will not be able to sign in to the staff area.')) return;
+      API.removeTeam(em).then(function () { toast('Access removed'); return loadAll(); })
+        .catch(function () { toast('Could not remove. Try again.', true); });
+    }
+    if (act === 'approve' || act === 'reject') {
+      var sid = btn.getAttribute('data-id');
+      btn.disabled = true;
+      var srow = null;
+      for (var k = 0; k < S.queue.length; k++) if (S.queue[k].id === sid) srow = S.queue[k];
+      var p = act === 'approve' ? API.approveSignup(sid) : API.rejectSignup(sid);
+      if (act === 'approve' && srow && srow.photos && srow.photos.length) {
+        // Carry the application's work photos into the new welder's portfolio.
+        p = p.then(function (r) {
+          var wid = r && r.worker_id;
+          if (!wid) return r;
+          return API.addWorkerPhotos(wid, srow.photos).then(function () { return r; });
+        });
+      }
+      p.then(function () { toast(act === 'approve' ? 'Welder approved - they can sign in now' : 'Sign-up rejected'); return loadAll(); })
+        .catch(function () { btn.disabled = false; toast('Could not save that. Try again.', true); });
+    }
+  });
+
+  document.addEventListener('toggle', function (e) {
+    var d = e.target;
+    if (d && d.classList && d.classList.contains('req')) S.open[d.getAttribute('data-id')] = d.open;
+  }, true);
+
+  /* ---------------- add welder ---------------- */
+  $('#wp').addEventListener('input', function () {
+    var v = trim(this.value), h = $('#wHint');
+    if (!v) { h.innerHTML = 'They then sign up themselves at <a href="welder.html">welder.html</a> using this number.'; h.className = 'hint'; return; }
+    if (API.isValidNgPhone(v)) { h.textContent = 'WhatsApp will use: ' + API.formatDisplay(v); h.className = 'hint'; }
+    else { h.textContent = 'Not a full Nigerian mobile yet. Type it like 0803 123 4567 (11 digits starting with 0).'; h.className = 'hint bad'; }
+  });
+
+  $('#addW').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = trim($('#wn').value), phone = trim($('#wp').value), err = $('#wErr');
+    err.textContent = '';
+    if (name.length < 2) { err.textContent = 'Enter the welder\'s name.'; return; }
+    if (!API.isValidNgPhone(phone)) { err.textContent = 'Enter a full Nigerian mobile number, like 0803 123 4567.'; return; }
+    API.addWorker({ name: name, phone: API.toIntl(phone), specialty: trim($('#ws').value) || null, available: true, account_status: 'none' }).then(function (row) {
+      $('#wn').value = ''; $('#wp').value = ''; $('#ws').value = '';
+      $('#wHint').innerHTML = 'They then sign up themselves at <a href="welder.html">welder.html</a> using this number.' +
+        (row && row.claim_pin ? ' Read their setup code <strong style="letter-spacing:2px">' + esc(row.claim_pin) + '</strong> out to them.' : '');
+      toast(row && row.claim_pin ? 'Welder added. Their setup code is ' + row.claim_pin : 'Welder added');
+      return loadAll();
+    }).catch(function () { err.textContent = 'Could not add the welder. Try again.'; });
+  });
+
+  /* ---------------- live alerts: hear changes the moment they happen ---------------- */
+  function workerOf(id) {
+    for (var i = 0; i < S.workers.length; i++) if (S.workers[i].id === id) return S.workers[i];
+    return null;
+  }
+  var reloadSoon = (function () {
+    var t = null;
+    return function () {
+      clearTimeout(t);
+      t = setTimeout(function () { loadAll(); }, 1200);
+    };
+  })();
+  var live = null;
+  function startLive() {
+    var sb = API.getSb();
+    if (!sb || live || API.demo) return;
+    live = sb.channel('owner-live');
+    live
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'requests' }, function (p) {
+        var r = p.new || {};
+        toast('New request: ' + (r.item || 'job') + ' for ' + (r.customer_name || 'customer'));
+        reloadSoon();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'offers' }, function () { reloadSoon(); })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'offers' }, function (p) {
+        var n = p.new || {};
+        if (n.status === 'accepted') { toast((workerName(n.worker_id) || 'A welder') + ' ACCEPTED the job'); reloadSoon(); }
+        else if (n.status === 'declined') { toast((workerName(n.worker_id) || 'A welder') + ' passed on a job'); reloadSoon(); }
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'welder_signups' }, function (p) {
+        var n = p.new || {};
+        toast('New welder sign-up waiting: ' + (n.name || 'someone'));
+        reloadSoon();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'staff_signups' }, function (p) {
+        var n = p.new || {};
+        toast('New staff application: ' + (n.name || 'someone'));
+        reloadSoon();
+      })
+      .subscribe(function () {});
+  }
+
+  /* ---------------- start ---------------- */
+  API.getSession().then(function (s) {
+    if (!s) { showLogin(); return; }
+    if (API.demo) { showApp(); return; }
+    API.getMyRole().then(function (role) {
+      if (role === 'owner') { showApp(); return; }
+      if (role === 'staff') { location.replace('admin.html'); return; }
+      if (role === 'welder') { location.replace('welder.html'); return; }
+      API.signOut().then(function () {
+        $('#loginErr').textContent = 'This login is not one of the owner accounts.';
+        showLogin();
+      });
+    }).catch(function () {
+      API.signOut().then(function () {
+        $('#loginErr').textContent = 'The database is not set up yet. Run supabase-setup.sql in Supabase, then reload.';
+        showLogin();
+      });
+    });
+  }).catch(showLogin);
+})();
+</script>
+</body>
+</html>

@@ -20,5 +20,9 @@ window.SITE_CONFIG = {
   GALLERY: [],
 
   SUPABASE_URL: "https://acmahsvfruveqneyvbhs.supabase.co",
-  SUPABASE_ANON_KEY: "sb_publishable_E1TueTCtyOKygwYToKK3VQ_yCpFBnTu"
+  SUPABASE_ANON_KEY: "sb_publishable_E1TueTCtyOKygwYToKK3VQ_yCpFBnTu",
+
+  // Public half of the phone-push keys. The private half lives ONLY in the
+  // Supabase edge function's secrets - never put it in this file.
+  PUSH_PUBLIC_KEY: "BGuf725j23QywnDe_XKxvIAfQkS0qVWGO8KcLstP8Hd0kcRwFv1D9OABJNyTFYn67dL8N4yRdftf-Mdjy2s4GKE"
 };

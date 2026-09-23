@@ -37,6 +37,17 @@
     if (res.error) throw res.error;
   }
 
+  // Calls a database function and throws when it comes back with an
+  // {error: "..."} answer, so callers can just use .catch().
+  function rpcStrict(name, args) {
+    if (demo) return Promise.resolve({ ok: true });
+    return sb.rpc(name, args || {}).then(function (r) {
+      if (r.error) throw r.error;
+      if (r.data && r.data.error) throw new Error(r.data.error);
+      return r.data;
+    });
+  }
+
   function uuid4() {
     if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
     var b = window.crypto && window.crypto.getRandomValues
@@ -108,7 +119,16 @@
     },
 
     /* ---------- public (customers) ---------- */
+    // Only the columns a stranger may see. Phones and login flags stay with
+    // the team (getWorkersTeam), otherwise anybody could lift a welder's
+    // number from the website and claim their account.
     getWorkers: function () {
+      if (demo) return Promise.resolve(load('demo_workers', DEMO_WORKERS).map(function (w) {
+        return { id: w.id, name: w.name, specialty: w.specialty, available: w.available, phone: w.phone };
+      }));
+      return sb.from('workers').select('id,name,specialty,available,phone').order('name').then(unwrap);
+    },
+    getWorkersTeam: function () {
       if (demo) return Promise.resolve(load('demo_workers', DEMO_WORKERS).slice());
       return sb.from('workers').select('*').order('name').then(unwrap);
     },
@@ -307,17 +327,25 @@
         save('demo_requests', load('demo_requests', []).filter(function (r) { return r.id !== id; }));
         return Promise.resolve();
       }
-      return sb.from('requests').delete().eq('id', id).then(check);
+      // Deleting returns no error when RLS silently skips the row (e.g. a
+      // staff member pressing Delete), so ask for the removed id back.
+      return sb.from('requests').delete().eq('id', id).select('id').then(unwrap).then(function (r) {
+        if (!r || !r.length) throw new Error('Not allowed to delete this request.');
+        return r;
+      });
     },
     addWorker: function (w) {
       if (demo) {
         var list = load('demo_workers', DEMO_WORKERS);
         w.id = 'w' + Date.now();
+        if (!w.claim_pin) w.claim_pin = String(Math.floor(100000 + Math.random() * 900000));
         list.push(w);
         save('demo_workers', list);
-        return Promise.resolve();
+        return Promise.resolve(w);
       }
-      return sb.from('workers').insert(w).then(check);
+      // .select() is fine here: the team has read access, and the owner needs
+      // the generated claim code back to give to the welder.
+      return sb.from('workers').insert(w).select().then(unwrap).then(function (r) { return r[0]; });
     },
     updateWorker: function (id, patch) {
       if (demo) {
@@ -334,6 +362,196 @@
         return Promise.resolve();
       }
       return sb.from('workers').delete().eq('id', id).then(check);
+    },
+
+    /* ---------- roles: owner, staff, welder ---------- */
+    // 'owner' | 'staff' | 'welder' | null (signed in but not set up yet)
+    getMyRole: function () {
+      if (demo) return Promise.resolve('owner');
+      return sb.rpc('my_role').then(function (r) {
+        if (r.error) throw r.error;
+        return r.data || null;
+      });
+    },
+    // Creates a login. resolves {needsConfirm:true} when the address must be
+    // confirmed by email first (no session yet), {needsConfirm:false} otherwise.
+    signUp: function (email, password) {
+      if (demo) {
+        try { sessionStorage.setItem('demo_admin', '1'); } catch (e) { mem.demo_admin = 1; }
+        return Promise.resolve({ needsConfirm: false });
+      }
+      return sb.auth.signUp({ email: email, password: password }).then(function (r) {
+        if (r.error) throw r.error;
+        return { needsConfirm: !r.data.session };
+      });
+    },
+    // Is this WhatsApp number already on the workshop's list?
+    // -> 'ready' (sign up now), 'in_use' (someone else has it), 'unknown'
+    welderPhoneStatus: function (phone) {
+      if (demo) return Promise.resolve({ state: 'ready' });
+      return sb.rpc('welder_phone_status', { p_phone: phone }).then(unwrap);
+    },
+    // Links this login to a welder record. mode: 'ready' | 'claimed' | 'queued'
+    // pin is the 6-digit code the owner reads out from the staff page; it is
+    // what stops a stranger who knows a welder's number from taking the row.
+    finishWelderSetup: function (name, phone, pin) {
+      if (demo) return Promise.resolve({ ok: true, mode: 'ready' });
+      var args = { p_name: name, p_phone: phone };
+      if (pin) args.p_pin = pin;
+      return sb.rpc('finish_welder_setup', args).then(unwrap).catch(function (err) {
+        // Database not migrated yet: fall back to the old two-argument call.
+        if (err && /does not exist|function public\.finish_welder_setup/.test(String(err.message || err))) {
+          return sb.rpc('finish_welder_setup', { p_name: name, p_phone: phone }).then(unwrap);
+        }
+        throw err;
+      });
+    },
+    getMyWorker: function () {
+      if (demo) return Promise.resolve(load('demo_workers', DEMO_WORKERS)[0] || null);
+      return sb.rpc('my_worker_id').then(unwrap).then(function (id) {
+        if (!id) return null;
+        return sb.from('workers').select('*').eq('id', id).then(unwrap).then(function (r) { return r[0] || null; });
+      });
+    },
+    // Every job offer made to the signed-in welder (RLS filters the rest).
+    listMyJobs: function () {
+      if (demo) {
+        var mine = load('demo_workers', DEMO_WORKERS)[0];
+        if (!mine) return Promise.resolve([]);
+        var reqs = load('demo_requests', []);
+        var offs = load('demo_offers', []).filter(function (o) { return o.worker_id === mine.id; });
+        return Promise.resolve(offs.map(function (o) {
+          var rq = reqs.filter(function (r) { return r.id === o.request_id; })[0] || {};
+          return {
+            id: o.id, token: o.token, status: o.status, created_at: o.created_at,
+            request_id: o.request_id,
+            requests: { ref: rq.ref, item: rq.item, customer_name: rq.customer_name,
+                        customer_phone: rq.customer_phone, location: rq.location,
+                        details: rq.details, material: rq.material, finish: rq.finish,
+                        budget: rq.budget, needed_by: rq.needed_by, notes: rq.notes,
+                        photos: rq.photos || [], status: rq.status }
+          };
+        }));
+      }
+      return sb.from('offers')
+        .select('id, token, status, created_at, request_id, requests(*)')
+        .order('created_at', { ascending: false })
+        .then(unwrap);
+    },
+
+    /* ---------- owner: team, invites, sign-ups ---------- */
+    listTeam: function () {
+      if (demo) return Promise.resolve([{ email: 'you@demo', role: 'owner', created_at: new Date().toISOString() }]);
+      return sb.from('team_members').select('*').order('created_at').then(unwrap);
+    },
+    removeTeam: function (email) {
+      if (demo) return Promise.resolve();
+      return sb.from('team_members').delete().eq('email', email).then(check);
+    },
+    createInvite: function () {
+      if (demo) return Promise.resolve({ code: 'DEMO1234' });
+      return rpcStrict('create_invite');
+    },
+    listInvites: function () {
+      if (demo) return Promise.resolve([]);
+      return sb.from('invites').select('*').order('created_at', { ascending: false }).then(unwrap);
+    },
+    redeemInvite: function (code) {
+      if (demo) return Promise.resolve({ ok: true, role: 'staff' });
+      return rpcStrict('redeem_invite', { p_code: code });
+    },
+    listSignups: function () {
+      if (demo) return Promise.resolve([]);
+      return sb.from('welder_signups').select('*').order('created_at', { ascending: false }).then(unwrap);
+    },
+    approveSignup: function (id) {
+      if (demo) return Promise.resolve({ ok: true });
+      return rpcStrict('approve_signup', { p_id: id });
+    },
+    rejectSignup: function (id) {
+      if (demo) return Promise.resolve({ ok: true });
+      return rpcStrict('reject_signup', { p_id: id });
+    },
+
+    /* ---------- live alerts + phone push ---------- */
+    // The realtime client, for pages that listen for live changes.
+    getSb: function () { return demo ? null : sb; },
+    // Save this device's push subscription for the signed-in welder.
+    savePushSub: function (sub) {
+      if (demo) return Promise.resolve({ ok: true });
+      return rpcStrict('save_push_subscription', { p_sub: sub });
+    },
+    // Tell the server to phone the listed welders about a new job.
+    // Best effort: never blocks or fails the request flow.
+    notifyJobOffer: function (requestId, workerIds, job) {
+      if (demo) return Promise.resolve({ ok: true });
+      return sb.functions.invoke('notify-new-offers', {
+        body: { request_id: requestId, worker_ids: workerIds, job: job || {} }
+      }).then(function (r) {
+        if (r.error) throw r.error;
+        return r.data;
+      }).catch(function () { return null; });
+    },
+
+    /* ---------- staff sign-up: owner approval queue ---------- */
+    // Creates the login and marks the application as a staff one.
+    signUpStaff: function (email, password, name) {
+      if (demo) return Promise.resolve({ needsConfirm: false });
+      return sb.auth.signUp({
+        email: email, password: password,
+        options: { data: { signup_kind: 'staff', signup_name: name } }
+      }).then(function (r) {
+        if (r.error) throw r.error;
+        return { needsConfirm: !r.data.session };
+      });
+    },
+    // Put this login into the owner's approval queue (idempotent).
+    finishStaffSignup: function (name) {
+      if (demo) return Promise.resolve({ mode: 'queued' });
+      return rpcStrict('finish_staff_signup', { p_name: name });
+    },
+    // 'pending' | 'approved' | 'rejected' | null
+    myStaffSignup: function () {
+      if (demo) return Promise.resolve(null);
+      return sb.rpc('my_staff_signup').then(function (r) {
+        if (r.error) throw r.error;
+        return r.data || null;
+      });
+    },
+    listStaffSignups: function () {
+      if (demo) return Promise.resolve([]);
+      return sb.from('staff_signups').select('*').order('created_at', { ascending: false }).then(unwrap);
+    },
+    approveStaffSignup: function (id) {
+      if (demo) return Promise.resolve({ ok: true });
+      return rpcStrict('approve_staff_signup', { p_id: id });
+    },
+    rejectStaffSignup: function (id) {
+      if (demo) return Promise.resolve({ ok: true });
+      return rpcStrict('reject_staff_signup', { p_id: id });
+    },
+
+    /* ---------- work portfolio: the "show your work" requirement ---------- */
+    // Every photo of finished work; pages group them by worker_id.
+    listWorkerPhotos: function () {
+      if (demo) return Promise.resolve([]);
+      return sb.from('worker_photos').select('*').order('created_at', { ascending: true }).then(unwrap);
+    },
+    addWorkerPhotos: function (workerId, urls) {
+      if (demo) return Promise.resolve({ ok: true });
+      if (!urls || !urls.length) return Promise.resolve({ ok: true });
+      var rows = urls.slice(0, 12).map(function (u) { return { worker_id: workerId, url: u }; });
+      return sb.from('worker_photos').insert(rows).then(check).then(function () { return { ok: true }; });
+    },
+    deleteWorkerPhoto: function (id) {
+      if (demo) return Promise.resolve({ ok: true });
+      return sb.from('worker_photos').delete().eq('id', id).then(check).then(function () { return { ok: true }; });
+    },
+    // Photos attached to a still-pending sign-up, so the owner can judge
+    // the work before approving the welder.
+    saveSignupPhotos: function (urls) {
+      if (demo) return Promise.resolve({ ok: true });
+      return rpcStrict('save_signup_photos', { p_urls: urls || [] });
     }
   };
 

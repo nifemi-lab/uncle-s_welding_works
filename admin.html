@@ -10,6 +10,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
 <link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#24211f">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
 .bar{background:var(--char);color:#fff;border-bottom:3px solid var(--spark)}
 .bar .in{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px}
@@ -77,7 +81,46 @@
     <button class="btn btn-quiet" type="button" id="pkLogin" style="width:100%;margin-top:8px" hidden><i class="ti ti-fingerprint" aria-hidden="true"></i> Sign in with passkey</button>
     <p class="hint" id="forgotMsg" style="min-height:1.2em;margin:10px 0 0"></p>
     <p style="margin:6px 0 0"><a href="#" id="forgot">Forgot password?</a> &middot; <a href="index.html">Back to the website</a></p>
+    <p class="hint" style="margin:12px 0 0;border-top:1.5px dashed var(--line);padding-top:12px">
+      Welder? <a href="welder.html">Sign up as a welder</a><br>
+      New staff member? <a href="#" id="showCode">Enter your invite code</a><br>
+      No code yet? <a href="#" id="showStaffUp">Sign up as staff</a>
+    </p>
+    <div id="codeBox" hidden style="margin-top:12px">
+      <label class="lab" for="ic">Invite code from the owner</label>
+      <input class="inp" id="ic" placeholder="A1B2C3D4" autocapitalize="characters" style="text-transform:uppercase">
+      <p class="err" id="icErr" role="alert"></p>
+      <button class="btn btn-quiet" type="button" id="doCode" style="width:100%">Join the staff</button>
+    </div>
   </form>
+</div>
+
+<div id="signup" hidden>
+  <form class="login" id="staffForm" autocomplete="on">
+    <h1>Sign up as staff</h1>
+    <p class="hint">Every application is checked by the owner first. You can sign in once it is approved.</p>
+    <div class="fld"><label class="lab" for="swn">Your name</label><input class="inp" id="swn" autocomplete="name"></div>
+    <div class="fld"><label class="lab" for="swe">Email (you will sign in with this)</label><input class="inp" id="swe" type="email" autocomplete="username"></div>
+    <div class="fld"><label class="lab" for="swp">Password (8 characters or more)</label><input class="inp" id="swp" type="password" autocomplete="new-password"></div>
+    <p class="err" id="suErr" role="alert"></p>
+    <button class="btn btn-primary" type="submit" style="width:100%">Send my application</button>
+    <p style="margin:6px 0 0"><a href="#" id="suBack">Back to sign in</a></p>
+  </form>
+</div>
+
+<div id="staffWait" hidden>
+  <div class="login">
+    <h1>Waiting for approval</h1>
+    <p class="hint">Your staff sign-up is with the owner. As soon as they approve it, you are in.</p>
+    <div style="border-top:1.5px dashed var(--line);padding-top:12px;margin-top:12px">
+      <p class="hint" style="margin-top:0"><b>Got an invite code from the owner?</b> It skips the wait:</p>
+      <label class="lab" for="wic">Invite code</label>
+      <input class="inp" id="wic" placeholder="A1B2C3D4" autocapitalize="characters" style="text-transform:uppercase">
+      <p class="err" id="wicErr" role="alert"></p>
+      <button class="btn btn-primary" type="button" id="wDoCode" style="width:100%">Join the staff now</button>
+    </div>
+    <button class="btn btn-quiet" type="button" id="swOut" style="width:100%;margin-top:10px">Sign out</button>
+  </div>
 </div>
 
 <div id="reset" hidden>
@@ -135,6 +178,9 @@
 <script src="config.js"></script>
 <script src="api.js"></script>
 <script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+</script>
+<script>
 (function () {
   'use strict';
   var cfg = window.SITE_CONFIG || {}, API = window.API;
@@ -170,22 +216,138 @@
   if (API.demo) { $('#loginDemo').hidden = false; $('#appDemo').hidden = false; }
 
   /* ---------- login ---------- */
-  function showLogin() { $('#app').hidden = true; $('#reset').hidden = true; $('#login').hidden = false; }
-  function showReset() { $('#app').hidden = true; $('#login').hidden = true; $('#reset').hidden = false; }
+  function hideScreens() {
+    $('#app').hidden = true; $('#reset').hidden = true;
+    $('#login').hidden = true; $('#signup').hidden = true; $('#staffWait').hidden = true;
+  }
+  function showLogin() { hideScreens(); $('#login').hidden = false; }
+  function showReset() { hideScreens(); $('#reset').hidden = false; }
   function showApp() {
-    $('#login').hidden = true; $('#reset').hidden = true; $('#app').hidden = false;
+    hideScreens(); $('#app').hidden = false;
     if (!API.demo && window.PublicKeyCredential) $('#pkAdd').hidden = false;
     loadAll();
+    startLive();
   }
+  function showStaffUp() { hideScreens(); $('#signup').hidden = false; $('#swn').focus(); }
+  function showStaffWaiting() {
+    hideScreens(); $('#staffWait').hidden = false;
+    // An invite code from the owner skips the wait. Uses onclick (not
+    // addEventListener) so showing this screen twice never stacks handlers.
+    $('#wDoCode').onclick = function () {
+      var e = $('#wicErr'); e.textContent = '';
+      var code = trim($('#wic').value);
+      if (code.length < 4) { e.textContent = 'Type the code the owner gave you.'; return; }
+      var b = this; b.disabled = true;
+      API.redeemInvite(code).then(function () {
+        toast('You are on the team.');
+        showApp();
+      }).catch(function (err) {
+        b.disabled = false;
+        e.textContent = (err && err.message) ? err.message : 'That code did not work.';
+      });
+    };
+  }
+
+  /* Send each kind of account to its own page:
+     owner -> owner.html, welder -> welder.html, staff -> this page.
+     A login with no role yet may be a staff application waiting for approval. */
+  function goToRole(role, errEl) {
+    if (API.demo || role === 'staff') { showApp(); return; }
+    if (role === 'owner') { location.replace('owner.html'); return; }
+    if (role === 'welder') { location.replace('welder.html'); return; }
+    return API.getSession().then(function (s) {
+      var meta = (s && s.user && s.user.user_metadata) || {};
+      var fin = (meta.signup_kind === 'staff' && meta.signup_name)
+        ? API.finishStaffSignup(meta.signup_name).catch(function () { return null; })
+        : Promise.resolve(null);
+      return fin.then(function () { return API.myStaffSignup(); });
+    }).then(function (st) {
+      if (st === 'pending') { showStaffWaiting(); return; }
+      if (st === 'rejected') {
+        return API.signOut().then(function () {
+          showLogin();
+          if (errEl) errEl.textContent = 'This staff application was not approved. Talk to the owner if you think that is a mistake.';
+        });
+      }
+      // Keep the session alive: the invite-code box on the sign-in screen
+      // needs it, so a bounced login can redeem a code straight away.
+      showLogin();
+      if (errEl) errEl.textContent = 'No access yet. Enter the invite code below (New staff member?), or sign up as staff / as a welder.';
+    }).catch(function () {
+      showLogin();
+      if (errEl) errEl.textContent = 'Could not check your access. Check your internet and try again.';
+    });
+  }
+
+  /* ---------- staff sign-up form: owner approval queue ---------- */
+  $('#showStaffUp').addEventListener('click', function (e) { e.preventDefault(); showStaffUp(); });
+  $('#suBack').addEventListener('click', function (e) { e.preventDefault(); showLogin(); });
+  $('#swOut').addEventListener('click', function () { API.signOut().then(showLogin); });
+  $('#staffForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var err = $('#suErr'); err.textContent = '';
+    var name = trim($('#swn').value), email = trim($('#swe').value).toLowerCase(), pw = $('#swp').value;
+    if (name.length < 2) { err.textContent = 'Enter your name.'; return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = 'Enter a valid email address.'; return; }
+    if (pw.length < 8) { err.textContent = 'Use at least 8 characters for the password.'; return; }
+    var btn = this.querySelector('[type="submit"]');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    API.signUpStaff(email, pw, name).then(function (r) {
+      btn.disabled = false; btn.textContent = 'Send my application';
+      $('#swn').value = ''; $('#swe').value = ''; $('#swp').value = '';
+      if (r && !r.needsConfirm) {
+        // Email confirmation is off: file the application right away.
+        return API.finishStaffSignup(name).catch(function () { return null; }).then(showStaffWaiting);
+      }
+      showLogin();
+      $('#forgotMsg').textContent = 'Almost there - open the confirmation email, click the link, then sign in. Your application is already waiting for the owner.';
+    }).catch(function (e2) {
+      btn.disabled = false; btn.textContent = 'Send my application';
+      var m = (e2 && e2.message) ? String(e2.message) : '';
+      if (/already/i.test(m)) err.textContent = 'That email is already registered. Sign in instead.';
+      else if (/rate limit/i.test(m)) err.textContent = 'Too many attempts too quickly. Wait about 15 minutes and try again.';
+      else if (/signups/i.test(m) && /disabled/i.test(m)) err.textContent = 'Sign-ups are switched off in Supabase.';
+      else if (/failed to fetch|network/i.test(m)) err.textContent = 'Could not reach the server. Check your internet and try again.';
+      else err.textContent = 'Could not send the application. ' + (m || 'Try again.');
+    });
+  });
+
   $('#loginForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var err = $('#loginErr'); err.textContent = '';
     API.signIn(trim($('#em').value), $('#pw').value).then(function () {
       $('#pw').value = '';
-      showApp();
+      if (API.demo) { showApp(); return; }
+      return API.getMyRole().then(function (role) { goToRole(role, err); })
+        .catch(function () {
+          err.textContent = 'The database is not set up yet. Run supabase-setup.sql in Supabase, then try again.';
+        });
     }).catch(function () { err.textContent = 'That email or password is wrong. Try again.'; });
   });
   $('#logout').addEventListener('click', function () { API.signOut().then(showLogin); });
+
+  $('#showCode').addEventListener('click', function (e) {
+    e.preventDefault();
+    $('#codeBox').hidden = false;
+    $('#ic').focus();
+  });
+  $('#doCode').addEventListener('click', function () {
+    var err = $('#icErr'); err.textContent = '';
+    var code = trim($('#ic').value);
+    if (code.length < 4) { err.textContent = 'Type the code the owner gave you.'; return; }
+    API.getSession().then(function (s) {
+      if (!s) {
+        err.textContent = 'Sign in with your email and password above first, then enter the code.';
+        return;
+      }
+      return API.redeemInvite(code).then(function () {
+        toast('You are on the team.');
+        showApp();
+      }).catch(function (e2) {
+        err.textContent = (e2 && e2.message) ? e2.message : 'That code did not work.';
+      });
+    });
+  });
 
   $('#forgot').addEventListener('click', function (e) {
     e.preventDefault();
@@ -228,9 +390,10 @@
 
   /* ---------- load ---------- */
   function loadAll() {
-    return Promise.all([API.listRequests(), API.getWorkers()]).then(function (r) {
+    return Promise.all([API.listRequests(), API.getWorkersTeam(), API.listWorkerPhotos()]).then(function (r) {
       S.reqs = r[0] || [];
       S.workers = r[1] || [];
+      S.pf = r[2] || [];
       var ids = S.reqs.map(function (x) { return x.id; });
       return API.listOffers(ids).then(function (o) {
         S.offers = o || [];
@@ -282,11 +445,20 @@
     rows = rows.concat([['Material', r.material], ['Finish', r.finish], ['Budget', r.budget], ['Needed', r.needed_by], ['Phone', API.formatDisplay(r.customer_phone) || r.customer_phone], ['Location', r.location], ['Customer notes', r.notes]]);
     var offs = S.offers.filter(function (o) { return o.request_id === r.id; });
     var base = location.origin + location.pathname.replace(/[^/]*$/, 'welder.html');
+    function waFor(o) {
+      var wk = workerOf(o.worker_id);
+      if (!wk || !API.isValidNgPhone(wk.phone)) return '';
+      var msg = 'Hi ' + wk.name + ', new job from ' + (cfg.BUSINESS_NAME || 'the workshop') + ': ' +
+        (r.item || 'job') + ' (' + (r.ref || '') + '). Accept here: ' + base + '?token=' + o.token;
+      return '<a class="btn btn-wa btn-sm" href="https://wa.me/' + API.toIntl(wk.phone) + '?text=' + encodeURIComponent(msg) +
+        '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>Send on WhatsApp</a>';
+    }
     var offHtml = offs.length
       ? '<div class="offs">' + offs.map(function (o) {
           return '<div class="off"><span>' + esc(workerName(o.worker_id)) + ' &mdash; ' + esc(o.status) + '</span>' +
             (o.status === 'open'
-              ? '<button type="button" class="btn btn-quiet btn-sm" data-act="copy-link" data-link="' + esc(base + '?token=' + o.token) + '"><i class="ti ti-link" aria-hidden="true"></i>Copy accept link</button>'
+              ? '<span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' + waFor(o) +
+                '<button type="button" class="btn btn-quiet btn-sm" data-act="copy-link" data-link="' + esc(base + '?token=' + o.token) + '"><i class="ti ti-link" aria-hidden="true"></i>Copy link</button></span>'
               : '<span class="meta">' + (o.status === 'accepted' ? 'job assigned' : 'passed') + '</span>') +
             '</div>';
         }).join('') + '</div>'
@@ -384,16 +556,35 @@
   $('#search').addEventListener('input', function () { S.q = trim(this.value).toLowerCase(); renderList(); });
 
   /* ---------- welders ---------- */
+  function acctBadge(w) {
+    if (w.account_status === 'active') return '<span class="badge b-ok">Login active</span>';
+    if (w.account_status === 'pending') return '<span class="badge b-busy">Sign-up waiting</span>';
+    return '<span class="badge" style="background:#eee9e3;color:#5f5953">No login yet</span>';
+  }
+
   function renderWorkers() {
-    if (!S.workers.length) { $('#wkList').innerHTML = '<div class="empty">No welders yet. Add one below so customers can choose them.</div>'; return; }
+    if (!S.workers.length) { $('#wkList').innerHTML = '<div class="empty">No welders yet. Add one below so customers can choose them. They sign themselves in at <a href="welder.html">welder.html</a> using the number you save here.</div>'; return; }
     $('#wkList').innerHTML = S.workers.map(function (w) {
       var numOk = API.isValidNgPhone(w.phone);
       var num = numOk ? API.formatDisplay(w.phone) : esc(w.phone);
+      var ph = (S.pf || []).filter(function (p) { return p.worker_id === w.id; });
+      var pinRow = (w.claim_pin && w.account_status !== 'active')
+        ? '<br><span class="meta">Setup code for ' + esc(w.name) + ': <strong style="letter-spacing:2px">' + esc(w.claim_pin) + '</strong> - read it out when they sign up at welder.html</span>'
+        : '';
       return '<div class="wk"><div class="main"><strong>' + esc(w.name) + '</strong><br><span class="meta">' + num + (w.specialty ? ', ' + esc(w.specialty) : '') + '</span>' +
+        pinRow +
         (numOk ? '' : '<br><span class="hint bad" style="margin-top:4px">This number is too short for WhatsApp. Remove and add them again with the full 11 digits, like 0803 123 4567.</span>') +
         '</div>' +
+        acctBadge(w) +
         '<span class="badge ' + (w.available ? 'b-ok' : 'b-busy') + '">' + (w.available ? 'Available' : 'Busy') + '</span>' +
+        '<span class="badge" style="background:' + (ph.length >= 3 ? '#e2f2e5;color:#1d5a2c' : '#f3d9d4;color:#8c2f22') + '">' +
+        ph.length + (ph.length === 1 ? ' photo' : ' photos') + (ph.length >= 3 ? ' - live' : ' - hidden') + '</span>' +
+        (ph.length ? '<span style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">' +
+          ph.slice(0, 4).map(function (p) {
+            return '<img src="' + esc(p.url) + '" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:6px;border:1.5px solid var(--line)">';
+          }).join('') + (ph.length > 4 ? '<span class="meta">+' + (ph.length - 4) + '</span>' : '') + '</span>' : '') +
         '<button type="button" class="btn btn-quiet btn-sm" data-act="toggle-w" data-id="' + esc(w.id) + '" data-avail="' + (w.available ? 1 : 0) + '">' + (w.available ? 'Mark as busy' : 'Mark as available') + '</button>' +
+        (numOk ? '<a class="btn btn-wa btn-sm" href="https://wa.me/' + API.toIntl(w.phone) + '?text=' + encodeURIComponent('Hello ' + w.name + ', this is ' + (cfg.BUSINESS_NAME || 'the workshop') + '.') + '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>WhatsApp</a>' : '') +
         '<button type="button" class="btn btn-danger btn-sm" data-act="delete-w" data-id="' + esc(w.id) + '">Remove</button></div>';
     }).join('');
   }
@@ -411,12 +602,44 @@
     err.textContent = '';
     if (name.length < 2) { err.textContent = 'Enter the welder\'s name.'; return; }
     if (!API.isValidNgPhone(phone)) { err.textContent = 'Enter a full Nigerian mobile number, like 0803 123 4567.'; return; }
-    API.addWorker({ name: name, phone: API.toIntl(phone), specialty: trim($('#ws').value) || null, available: true }).then(function () {
+    API.addWorker({ name: name, phone: API.toIntl(phone), specialty: trim($('#ws').value) || null, available: true }).then(function (row) {
       $('#wn').value = ''; $('#wp').value = ''; $('#ws').value = ''; $('#wHint').textContent = '';
-      toast('Welder added');
+      toast(row && row.claim_pin ? 'Welder added. Their setup code is ' + row.claim_pin : 'Welder added');
       return loadAll();
     }).catch(function () { err.textContent = 'Could not add the welder. Try again.'; });
   });
+
+  /* ---------- live alerts: hear changes the moment they happen ---------- */
+  function workerOf(id) {
+    for (var i = 0; i < S.workers.length; i++) if (S.workers[i].id === id) return S.workers[i];
+    return null;
+  }
+  var reloadSoon = (function () {
+    var t = null;
+    return function () {
+      clearTimeout(t);
+      t = setTimeout(function () { loadAll(); }, 1200);
+    };
+  })();
+  var live = null;
+  function startLive() {
+    var sb = API.getSb();
+    if (!sb || live || API.demo) return;
+    live = sb.channel('staff-live');
+    live
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'requests' }, function (p) {
+        var r = p.new || {};
+        toast('New request: ' + (r.item || 'job') + ' for ' + (r.customer_name || 'customer'));
+        reloadSoon();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'offers' }, function () { reloadSoon(); })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'offers' }, function (p) {
+        var n = p.new || {};
+        if (n.status === 'accepted') { toast((workerName(n.worker_id) || 'A welder') + ' ACCEPTED the job'); reloadSoon(); }
+        else if (n.status === 'declined') { toast((workerName(n.worker_id) || 'A welder') + ' passed on a job'); reloadSoon(); }
+      })
+      .subscribe(function () {});
+  }
 
   /* ---------- start ---------- */
   API.onPasswordRecovery(function () {
@@ -424,9 +647,14 @@
     showReset();
   });
   API.getSession().then(function (s) {
-    if (s && /type=recovery/.test(location.hash)) showReset();
-    else if (s) showApp();
-    else showLogin();
+    if (s && /type=recovery/.test(location.hash)) { showReset(); return; }
+    if (!s) { showLogin(); return; }
+    if (API.demo) { showApp(); return; }
+    API.getMyRole().then(function (role) { goToRole(role, $('#loginErr')); })
+      .catch(function () {
+        showLogin();
+        $('#loginErr').textContent = 'The database is not set up yet. Run supabase-setup.sql in Supabase, then reload.';
+      });
   }).catch(showLogin);
 })();
 </script>

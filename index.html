@@ -10,6 +10,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
 <link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#24211f">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
 .wrap{max-width:1040px;margin:0 auto}
 .sec{padding:64px 20px}
@@ -199,6 +203,9 @@ footer a{color:#d2cac1}
 <script src="config.js"></script>
 <script src="api.js"></script>
 <script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+</script>
+<script>
 (function () {
   'use strict';
   var cfg = window.SITE_CONFIG || {};
@@ -306,8 +313,17 @@ footer a{color:#d2cac1}
   function fresh() { clearFiles(); state = { step: 0, item: null, d: {}, workerId: 'any', files: [] }; done = null; }
   fresh();
 
-  API.getWorkers().then(function (w) {
-    workers = (w || []).slice().sort(function (a, b) { return (b.available ? 1 : 0) - (a.available ? 1 : 0); });
+  var photosByWorker = {};
+  function photosOf(id) { return photosByWorker[id] || []; }
+
+  Promise.all([
+    API.getWorkers(),
+    API.listWorkerPhotos().catch(function () { return []; })
+  ]).then(function (r) {
+    workers = (r[0] || []).slice().sort(function (a, b) { return (b.available ? 1 : 0) - (a.available ? 1 : 0); });
+    (r[1] || []).forEach(function (p) {
+      (photosByWorker[p.worker_id] = photosByWorker[p.worker_id] || []).push(p.url);
+    });
     if (state.step === 3 && !done) render();
   }).catch(function () { workers = []; });
 
@@ -369,11 +385,22 @@ footer a{color:#d2cac1}
   function stepWorker() {
     var h = '<h3>Choose a welder</h3><p class="hint">Pick someone who is free now, or let us assign the next available welder.</p>';
     h += '<button type="button" class="w' + (state.workerId === 'any' ? ' on' : '') + '" data-worker="any"><span class="ic"><i class="ti ti-users" aria-hidden="true"></i></span><span><span class="nm">Any available welder</span><br><span class="sp">We will assign the next free person</span></span></button>';
+    var QUAL = 3; // the "show your work" requirement
     workers.forEach(function (w) {
+      var ph = photosOf(w.id);
+      // Customers may only pick welders who show at least QUAL photos.
+      if (ph.length < QUAL) return;
       var on = state.workerId === w.id;
+      var face = ph.length
+        ? '<img src="' + esc(ph[0]) + '" alt="" style="width:100%;height:100%;object-fit:cover">'
+        : esc((w.name || '?').charAt(0).toUpperCase());
+      var strip = ph.slice(1, 3).map(function (u) {
+        return '<img src="' + esc(u) + '" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1.5px solid var(--line)">';
+      }).join('');
       h += '<button type="button" class="w' + (on ? ' on' : '') + '" data-worker="' + esc(w.id) + '"' + (w.available ? '' : ' disabled') + '>' +
-        '<span class="ic">' + esc((w.name || '?').charAt(0).toUpperCase()) + '</span>' +
-        '<span><span class="nm">' + esc(w.name) + '</span><br><span class="sp">' + esc(w.specialty || 'Welder') + '</span></span>' +
+        '<span class="ic" style="padding:0;overflow:hidden;background:#ddd8d2">' + face + '</span>' +
+        '<span><span class="nm">' + esc(w.name) + '</span><br><span class="sp">' + esc(w.specialty || 'Welder') + ' &middot; ' + ph.length + ' photos of work</span>' +
+        (strip ? '<br><span style="display:flex;gap:4px;margin-top:6px">' + strip + '</span>' : '') + '</span>' +
         '<span class="bd badge ' + (w.available ? 'b-ok' : 'b-busy') + '">' + (w.available ? 'Available' : 'Busy') + '</span></button>';
     });
     return h;
@@ -571,12 +598,16 @@ footer a{color:#d2cac1}
       row.photos = urls || [];
       return API.createRequest(row);
     }).then(function (savedRow) {
-      if (!w && savedRow && savedRow.id) {
-        var ids = workers.filter(function (x) { return x.available; })
+      if (savedRow && savedRow.id) {
+        // Offer the job to the welder the customer picked, or broadcast to
+        // up to 10 available welders. Either way, push their phone alert.
+        var ids = w ? [w.id] : workers.filter(function (x) { return x.available; })
           .slice(0, 10).map(function (x) { return x.id; });
         if (ids.length) {
           API.createOffers(savedRow.id, ids).then(function () {
-            finish(true, ids.length);
+            API.notifyJobOffer(savedRow.id, ids, { ref: row.ref, item: row.item, location: row.location });
+            // Picked welder keeps the "talk with X on WhatsApp" wording (0).
+            finish(true, w ? 0 : ids.length);
           }).catch(function () { finish(true, 0); });
           return;
         }

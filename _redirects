@@ -1,0 +1,4 @@
+# Setup files stay on the developer machine only - never served publicly.
+/supabase-setup.sql  /404  404
+/supabase-notify.sql /404  404
+/README.md           /404  404

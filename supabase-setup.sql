@@ -917,3 +917,143 @@ begin
 end;
 $$;
 grant execute on function public.save_signup_photos(jsonb) to authenticated;
+
+-- =====================================================================
+-- MONEY: welder plans and payments
+--   free     - listed, receives jobs (family and approved welders)
+--   pro      - paid monthly: "Pro" badge and priority in the list
+--   featured - paid monthly: gold badge, always first in the list
+-- A paid plan stops working when paid_until passes; the welder then
+-- disappears from the customer list until they pay again. family_free
+-- welders are never charged and never expire.
+-- =====================================================================
+alter table public.workers add column if not exists plan text not null default 'free'
+  check (plan in ('free','pro','featured'));
+alter table public.workers add column if not exists paid_until timestamptz;
+alter table public.workers add column if not exists family_free boolean not null default false;
+
+create table if not exists public.payments (
+  id uuid primary key default gen_random_uuid(),
+  worker_id uuid not null references public.workers(id) on delete cascade,
+  email text not null default '',
+  plan text not null check (plan in ('pro','featured')),
+  amount_kobo integer not null check (amount_kobo > 0),
+  reference text not null unique,
+  status text not null default 'pending' check (status in ('pending','paid','failed')),
+  created_at timestamptz not null default now(),
+  confirmed_at timestamptz,
+  note text
+);
+
+alter table public.payments enable row level security;
+
+drop policy if exists "welder records own payment" on public.payments;
+create policy "welder records own payment" on public.payments
+  for insert to authenticated
+  with check (status = 'pending' and worker_id = public.my_worker_id());
+
+drop policy if exists "welder reads own payments" on public.payments;
+create policy "welder reads own payments" on public.payments
+  for select to authenticated
+  using (worker_id = public.my_worker_id() or public.is_team());
+
+drop policy if exists "team manages payments" on public.payments;
+create policy "team manages payments" on public.payments
+  for update to authenticated
+  using (public.is_team()) with check (public.is_team());
+
+-- Prices live here so the website cannot lie about what it charges.
+-- pro = 2000 naira, featured = 4000 naira (kobo = naira x 100).
+create or replace function public.start_payment(p_plan text)
+returns jsonb language plpgsql security definer set search_path = public
+as $$
+declare
+  wid uuid := public.my_worker_id();
+  amt integer;
+  ref text;
+begin
+  if wid is null then
+    return jsonb_build_object('error', 'no worker');
+  end if;
+  amt := case p_plan when 'pro' then 200000 when 'featured' then 400000 else 0 end;
+  if amt = 0 then
+    return jsonb_build_object('error', 'bad plan');
+  end if;
+  ref := 'UW-' || substr(md5(random()::text || clock_timestamp()::text), 1, 12);
+  insert into public.payments (worker_id, email, plan, amount_kobo, reference)
+  values (wid, lower(coalesce(auth.jwt() ->> 'email', '')), p_plan, amt, ref);
+  return jsonb_build_object('reference', ref, 'amount_kobo', amt);
+end;
+$$;
+grant execute on function public.start_payment(text) to authenticated;
+
+-- Reporting a transfer only creates the pending row above. Nobody but the
+-- owner (approve_payment) or the OPay webhook (service role) may mark money
+-- as received, so this old self-serve function is removed if it exists.
+drop function if exists public.finish_payment(text);
+
+-- Customers need the plan and expiry to order the list and hide lapsed welders.
+revoke select on public.workers from anon;
+grant select (id, name, specialty, available, phone, plan, paid_until) on public.workers to anon;
+
+-- =====================================================================
+-- OWNER DECIDES: only the workshop ever switches a welder's plan on.
+-- =====================================================================
+
+-- The owner ticks a payment off in the Money tab - the plan goes live
+-- for 30 days from today. Staff can approve too; customers cannot.
+create or replace function public.approve_payment(p_id uuid)
+returns jsonb language plpgsql security definer set search_path = public
+as $$
+declare
+  p public.payments%rowtype;
+begin
+  if not public.is_team() then
+    return jsonb_build_object('error', 'staff only');
+  end if;
+  select * into p from public.payments where id = p_id for update;
+  if not found then
+    return jsonb_build_object('error', 'not found');
+  end if;
+  if p.status = 'failed' then
+    return jsonb_build_object('error', 'failed');
+  end if;
+  update public.payments
+     set status = 'paid',
+         confirmed_at = coalesce(confirmed_at, now()),
+         note = 'approved by ' || coalesce(auth.jwt() ->> 'email', 'the workshop')
+   where id = p_id;
+  update public.workers
+     set plan = p.plan,
+         paid_until = greatest(coalesce(paid_until, now()), now()) + interval '30 days'
+   where id = p.worker_id;
+  return jsonb_build_object('ok', true, 'plan', p.plan);
+end;
+$$;
+grant execute on function public.approve_payment(uuid) to authenticated;
+
+-- Switch any welder's plan by hand from the Welders tab: cash handed in
+-- at the workshop, a plan taken away, or a correction.
+create or replace function public.set_worker_plan(p_worker uuid, p_plan text)
+returns jsonb language plpgsql security definer set search_path = public
+as $$
+begin
+  if not public.is_team() then
+    return jsonb_build_object('error', 'staff only');
+  end if;
+  if p_plan is null or p_plan not in ('free', 'pro', 'featured') then
+    return jsonb_build_object('error', 'bad plan');
+  end if;
+  update public.workers
+     set plan = p_plan,
+         paid_until = case when p_plan = 'free' then null
+                      else greatest(coalesce(paid_until, now()), now()) + interval '30 days'
+                      end
+   where id = p_worker;
+  if not found then
+    return jsonb_build_object('error', 'not found');
+  end if;
+  return jsonb_build_object('ok', true, 'plan', p_plan);
+end;
+$$;
+grant execute on function public.set_worker_plan(uuid, text) to authenticated;

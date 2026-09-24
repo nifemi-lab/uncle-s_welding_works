@@ -320,7 +320,16 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
     API.getWorkers(),
     API.listWorkerPhotos().catch(function () { return []; })
   ]).then(function (r) {
-    workers = (r[0] || []).slice().sort(function (a, b) { return (b.available ? 1 : 0) - (a.available ? 1 : 0); });
+    workers = (r[0] || []).slice()
+      .filter(function (w) {
+        // A paid plan that has run out hides the welder until they renew.
+        return !(w.plan && w.plan !== 'free' && w.paid_until && new Date(w.paid_until) < new Date());
+      })
+      .sort(function (a, b) {
+        // Featured first, then Pro - availability decides the rest.
+        function tier(w) { return w.plan === 'featured' ? 2 : w.plan === 'pro' ? 1 : 0; }
+        return tier(b) - tier(a) || (b.available ? 1 : 0) - (a.available ? 1 : 0);
+      });
     (r[1] || []).forEach(function (p) {
       (photosByWorker[p.worker_id] = photosByWorker[p.worker_id] || []).push(p.url);
     });
@@ -397,10 +406,16 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
       var strip = ph.slice(1, 3).map(function (u) {
         return '<img src="' + esc(u) + '" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1.5px solid var(--line)">';
       }).join('');
+      var planTag = w.plan === 'featured'
+        ? '<span class="bd badge" style="background:#ffe9a8;color:#6b4600">&#9733; Featured</span>'
+        : w.plan === 'pro'
+        ? '<span class="bd badge" style="background:#e3edff;color:#1c3f8f">Pro</span>'
+        : '';
       h += '<button type="button" class="w' + (on ? ' on' : '') + '" data-worker="' + esc(w.id) + '"' + (w.available ? '' : ' disabled') + '>' +
         '<span class="ic" style="padding:0;overflow:hidden;background:#ddd8d2">' + face + '</span>' +
         '<span><span class="nm">' + esc(w.name) + '</span><br><span class="sp">' + esc(w.specialty || 'Welder') + ' &middot; ' + ph.length + ' photos of work</span>' +
         (strip ? '<br><span style="display:flex;gap:4px;margin-top:6px">' + strip + '</span>' : '') + '</span>' +
+        planTag +
         '<span class="bd badge ' + (w.available ? 'b-ok' : 'b-busy') + '">' + (w.available ? 'Available' : 'Busy') + '</span></button>';
     });
     return h;

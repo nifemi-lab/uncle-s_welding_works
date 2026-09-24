@@ -127,6 +127,7 @@
       <button class="chip on" id="tabReq" type="button" data-tab="requests"><i class="ti ti-file-invoice" aria-hidden="true"></i> Requests</button>
       <button class="chip" id="tabWk" type="button" data-tab="welders"><i class="ti ti-tool" aria-hidden="true"></i> Welders</button>
       <button class="chip" id="tabTeam" type="button" data-tab="team"><i class="ti ti-users" aria-hidden="true"></i> Staff</button>
+      <button class="chip" id="tabM" type="button" data-tab="money"><i class="ti ti-coin" aria-hidden="true"></i> Money</button>
       <button class="chip" id="tabQ" type="button" data-tab="queue"><i class="ti ti-user-plus" aria-hidden="true"></i> Sign-ups <span id="qCount" class="badge b-busy" hidden>0</span></button>
     </div>
 
@@ -295,14 +296,17 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
     $('#tabReq').className = 'chip' + (S.tab === 'requests' ? ' on' : '');
     $('#tabWk').className = 'chip' + (S.tab === 'welders' ? ' on' : '');
     $('#tabTeam').className = 'chip' + (S.tab === 'team' ? ' on' : '');
+    $('#tabM').className = 'chip' + (S.tab === 'money' ? ' on' : '');
     $('#tabQ').className = 'chip' + (S.tab === 'queue' ? ' on' : '');
     $('#reqView').hidden = S.tab !== 'requests';
     $('#wkView').hidden = S.tab !== 'welders';
     $('#teamView').hidden = S.tab !== 'team';
+    $('#moneyView').hidden = S.tab !== 'money';
     $('#queueView').hidden = S.tab !== 'queue';
     if (S.tab === 'requests') { renderCounts(); renderList(); }
     else if (S.tab === 'welders') renderWorkers();
     else if (S.tab === 'team') renderTeam();
+    else if (S.tab === 'money') renderMoney();
     else renderQueue();
   }
 
@@ -419,6 +423,19 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
       var pinRow = (w.claim_pin && w.account_status !== 'active')
         ? '<br><span class="meta">Setup code for ' + esc(w.name) + ': <strong style="letter-spacing:2px">' + esc(w.claim_pin) + '</strong> - read it out when they sign up at welder.html</span>'
         : '';
+      var paidTo = w.paid_until ? new Date(w.paid_until) : null;
+      var lapsed = w.plan && w.plan !== 'free' && paidTo && paidTo < new Date();
+      var planMeta = (w.plan && w.plan !== 'free')
+        ? '<span class="meta">' + (lapsed ? 'lapsed ' : paidTo ? 'paid until ' : '') +
+          esc(paidTo ? paidTo.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : '') + '</span>'
+        : '';
+      var planCtl =
+        '<select class="inp" data-plan-sel="' + esc(w.id) + '" style="max-width:112px;padding:5px 8px">' +
+        ['free', 'pro', 'featured'].map(function (v) {
+          return '<option value="' + v + '"' + (v === (w.plan || 'free') ? ' selected' : '') + '>' +
+            (v === 'free' ? 'Free' : v === 'pro' ? 'Pro' : 'Featured') + '</option>';
+        }).join('') + '</select>' +
+        '<button type="button" class="btn btn-quiet btn-sm" data-plan-go="' + esc(w.id) + '">Set plan</button>';
       return '<div class="wk"><div class="main"><strong>' + esc(w.name) + '</strong><br><span class="meta">' + num + (w.specialty ? ', ' + esc(w.specialty) : '') + '</span>' +
         pinRow +
         (numOk ? '' : '<br><span class="err" style="margin-top:4px">Number too short for WhatsApp. Remove and add again with 11 digits.</span>') +
@@ -426,6 +443,7 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
         '<span class="badge ' + (w.available ? 'b-ok' : 'b-busy') + '">' + (w.available ? 'Available' : 'Busy') + '</span>' +
         '<span class="badge" style="background:' + (ph.length >= 3 ? '#e2f2e5;color:#1d5a2c' : '#f3d9d4;color:#8c2f22') + '">' +
         ph.length + (ph.length === 1 ? ' photo' : ' photos') + (ph.length >= 3 ? ' - live' : ' - hidden') + '</span>' +
+        planBadge(w) + planMeta + planCtl +
         (ph.length ? '<span style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">' +
           ph.slice(0, 4).map(function (p) {
             return '<img src="' + esc(p.url) + '" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:6px;border:1.5px solid var(--line)">';
@@ -434,6 +452,27 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
         (numOk ? '<a class="btn btn-wa btn-sm" href="https://wa.me/' + API.toIntl(w.phone) + '?text=' + encodeURIComponent('Hello ' + w.name + ', this is ' + (cfg.BUSINESS_NAME || 'the workshop') + '.') + '" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>WhatsApp</a>' : '') +
         '<button type="button" class="btn btn-danger btn-sm" data-act="delete-w" data-id="' + esc(w.id) + '">Remove</button></div>';
     }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-plan-go]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-plan-go');
+        var sel = document.querySelector('[data-plan-sel="' + id + '"]');
+        var plan = sel ? sel.value : 'free';
+        btn.disabled = true;
+        API.setWorkerPlan(id, plan).then(function (r) {
+          if (r && r.error) {
+            btn.disabled = false;
+            toast(r.error === 'staff only' ? 'Only the owner can change plans.' : 'Could not change the plan.', true);
+            return;
+          }
+          toast(plan === 'free' ? 'Plan set to Free.' : 'Plan switched to ' + plan + ' - on for 30 days.');
+          loadAll();
+        }).catch(function (err) {
+          btn.disabled = false;
+          toast((err && err.message) === 'staff only' ? 'Only the owner can change plans.'
+            : (err && err.message) || 'Could not change the plan.', true);
+        });
+      });
+    });
   }
 
   /* ---------------- team ---------------- */
@@ -679,6 +718,87 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
         reloadSoon();
       })
       .subscribe(function () {});
+  }
+
+  /* ---------------- money: payments and plans ---------------- */
+  // The Money view is injected here so the rest of the page stays untouched.
+  $('#queueView').insertAdjacentHTML('beforebegin',
+    '<div id="moneyView" hidden><div class="panel">' +
+    '<h2>Money</h2>' +
+    '<p class="hint">Every plan payment the welders have reported. Open your <b>OPay</b> app, check the transfer really arrived, then press <b>Approve</b> - only the workshop can switch a plan on.</p>' +
+    '<div id="payList" style="margin-top:12px"></div>' +
+    '</div></div>');
+
+  function planBadge(w) {
+    if (w && w.plan === 'featured') return '<span class="badge" style="background:#ffe9a8;color:#6b4600">&#9733; Featured</span>';
+    if (w && w.plan === 'pro') return '<span class="badge" style="background:#e3edff;color:#1c3f8f">Pro</span>';
+    return '<span class="badge" style="background:#eee9e3;color:#5f5953">Free</span>';
+  }
+
+  function renderMoney() {
+    var box = $('#payList');
+    if (!box) return;
+    box.innerHTML = '<div class="empty">Loading...</div>';
+    API.listPayments().then(function (list) {
+      list = list || [];
+      if (!list.length) {
+        box.innerHTML = '<div class="empty">No payments yet. When a welder pays for a plan it appears here for you to approve.</div>';
+        return;
+      }
+      box.innerHTML = list.map(function (p) {
+        var w = null;
+        for (var i = 0; i < S.workers.length; i++) if (S.workers[i].id === p.worker_id) { w = S.workers[i]; break; }
+        var amt = '\u20a6' + ((p.amount_kobo || 0) / 100).toLocaleString('en-NG');
+        var approved = !!p.note;
+        var status = p.status === 'failed'
+          ? '<span class="badge b-busy">Failed</span>'
+          : approved
+          ? '<span class="badge b-ok">Approved ' + esc(fmt(p.confirmed_at || p.created_at)) + '</span>'
+          : '<span class="badge b-busy">' + (p.status === 'paid' ? 'Transferred - check OPay' : 'Reported - confirm it') + '</span>';
+        return '<div class="wk"><div class="main"><strong>' + esc((w && w.name) || p.email || 'A welder') + '</strong>' +
+          '<br><span class="meta">' + esc((p.plan === 'featured' ? 'Featured' : 'Pro') + ' plan \u00b7 ' + amt +
+          ' \u00b7 ref ' + p.reference + ' \u00b7 ' + fmt(p.created_at)) + '</span></div>' +
+          status +
+          (approved || p.status === 'failed' ? '' :
+            '<button type="button" class="btn btn-primary btn-sm" data-pa="' + esc(p.id) + '">Approve</button>' +
+            '<button type="button" class="btn btn-danger btn-sm" data-pfx="' + esc(p.id) + '">Mark failed</button>') +
+          '</div>';
+      }).join('');
+      Array.prototype.forEach.call(box.querySelectorAll('[data-pa]'), function (btn) {
+        btn.addEventListener('click', function () {
+          btn.disabled = true;
+          API.approvePayment(btn.getAttribute('data-pa')).then(function (r) {
+            if (r && r.error) {
+              btn.disabled = false;
+              toast(r.error === 'staff only' ? 'Only the owner can approve payments.' : 'Could not approve that payment.', true);
+              return;
+            }
+            toast('Approved - the plan is on for 30 days.');
+            loadAll();
+          }).catch(function (err) {
+            btn.disabled = false;
+            toast((err && err.message) === 'staff only' ? 'Only the owner can approve payments.'
+              : (err && err.message) || 'Could not approve. Try again.', true);
+          });
+        });
+      });
+      Array.prototype.forEach.call(box.querySelectorAll('[data-pfx]'), function (btn) {
+        btn.addEventListener('click', function () {
+          if (!window.confirm('Mark this payment as failed? The plan will not be switched on.')) return;
+          btn.disabled = true;
+          API.updatePayment(btn.getAttribute('data-pfx'), { status: 'failed' }).then(function (r) {
+            if (r && r.error) { btn.disabled = false; toast('Could not update that payment.', true); return; }
+            toast('Marked as failed.');
+            loadAll();
+          }).catch(function (err) {
+            btn.disabled = false;
+            toast((err && err.message) || 'Could not update that payment.', true);
+          });
+        });
+      });
+    }).catch(function () {
+      box.innerHTML = '<div class="empty">Could not load payments. Check your internet and open this tab again.</div>';
+    });
   }
 
   /* ---------------- start ---------------- */

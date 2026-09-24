@@ -251,6 +251,10 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
       '<div class="card" style="max-width:460px;margin:40px auto">' +
       '<h2>Sign up as a welder</h2>' +
       '<p class="hint">This only works if the workshop already added your WhatsApp number. If it is not on the list yet, your request goes to the owner to approve.</p>' +
+      '<p class="hint" style="margin:8px 0 0;padding:10px;border:1.5px dashed var(--line);border-radius:10px"><strong>Plans once you are approved:</strong><br>' +
+      'Free - listed on the website and you receive jobs.<br>' +
+      'Pro - &#8358;' + ((cfg.PRICES_NGN || {}).pro || 2000).toLocaleString() + '/month: Pro badge and priority in the customer list.<br>' +
+      'Featured - &#8358;' + ((cfg.PRICES_NGN || {}).featured || 4000).toLocaleString() + '/month: gold badge, always first in the list.</p>' +
       '<div class="fld"><label class="lab" for="sn">Your name</label><input class="inp" id="sn" autocomplete="name"></div>' +
       '<div class="fld"><label class="lab" for="sp">Your WhatsApp number</label><input class="inp" id="sp" type="tel" placeholder="081 0628 5867" autocomplete="tel"><p class="hint" id="spHint" style="margin-top:6px"></p></div>' +
       '<div class="fld"><label class="lab" for="sc">6-digit code from the workshop</label><input class="inp" id="sc" type="text" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code"><p class="hint" id="scHint" style="margin-top:6px">The owner reads this code out when they add you. It proves the number is really yours.</p></div>' +
@@ -555,8 +559,36 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
       '<span class="hint">' + pf.length + ' of 12 added. JPG or PNG.</span></div>' +
       '</div>';
 
+    var PR = cfg.PRICES_NGN || { pro: 2000, featured: 4000 };
+    var lapsed = w.plan && w.plan !== 'free' && !w.family_free &&
+      (!w.paid_until || new Date(w.paid_until) < new Date());
+    var active = w.plan && w.plan !== 'free' && !lapsed;
+    var planName = w.family_free ? 'Family - never charged'
+      : w.plan === 'featured' ? 'Featured' : w.plan === 'pro' ? 'Pro' : 'Free';
+    var planCard =
+      '<div class="job" style="margin-top:14px">' +
+      '<h3 style="font-size:22px">Your plan <span class="badge ' + (active || w.family_free ? 'b-ok' : '') + '">' + esc(planName) + '</span></h3>' +
+      (lapsed
+        ? '<p class="hint bad" style="margin-top:6px">Your paid plan has lapsed, so customers cannot see you in the list until you renew. You can still sign in here and renew.</p>'
+        : w.plan === 'free' && !w.family_free
+          ? '<p class="hint">Free: you are listed and you receive jobs. Paying members get a badge and appear first in the customer list.</p>'
+          : active && w.paid_until
+            ? '<p class="hint">Paid until ' + new Date(w.paid_until).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) + '. It renews when you pay again.</p>'
+            : '') +
+      (w.family_free ? '' :
+        '<div class="row" style="margin-top:10px">' +
+        '<button type="button" class="btn btn-primary btn-sm" data-pay="pro"><i class="ti ti-badge" aria-hidden="true"></i>' +
+        (w.plan === 'pro' && !lapsed ? 'Renew Pro' : 'Go Pro') + ' - &#8358;' + PR.pro.toLocaleString() + '/month</button>' +
+        '<button type="button" class="btn btn-quiet btn-sm" data-pay="featured"><i class="ti ti-star" aria-hidden="true"></i>' +
+        (w.plan === 'featured' && !lapsed ? 'Renew Featured' : 'Go Featured') + ' - &#8358;' + PR.featured.toLocaleString() + '/month</button></div>' +
+        '<p class="hint" style="margin-top:6px">' +
+        (cfg.OPAY_MERCHANT_ID
+          ? 'Pay on OPay\'s secure page - your plan switches on by itself as soon as the money goes through.'
+          : 'Pay by bank transfer: tap a button above to see the workshop account details. Your plan switches on once the workshop confirms the money arrived.') + '</p>') +
+      '</div>';
+
     $('#box').innerHTML = head +
-      '<div id="pushBox"></div>' + pfCard +
+      '<div id="pushBox"></div>' + planCard + pfCard +
       '<div class="row" style="margin-top:16px;justify-content:space-between">' +
       '<h2 style="font-size:30px">Your jobs <span class="hint" style="font-weight:400">(' + board.jobs.length + ')</span></h2>' +
       '<button type="button" class="btn btn-quiet btn-sm" id="refresh"><i class="ti ti-refresh" aria-hidden="true"></i>Refresh</button></div>' +
@@ -597,6 +629,10 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
       });
     });
 
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pay]'), function (btn) {
+      btn.addEventListener('click', function () { payFor(btn.getAttribute('data-pay')); });
+    });
+
     Array.prototype.forEach.call(document.querySelectorAll('[data-act]'), function (btn) {
       btn.addEventListener('click', function () {
         var act = btn.getAttribute('data-act'), tk = btn.getAttribute('data-token');
@@ -623,6 +659,123 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
     }).catch(function () {
       $('#box').innerHTML = '<div class="card"><h2>Could not load</h2><p>Check your internet and press refresh on this page.</p>' +
         '<div class="row"><button class="btn btn-quiet" type="button" onclick="location.reload()">Try again</button></div></div>';
+    });
+  }
+
+  /* ---------------- plan payments: OPay automatic, transfer fallback ----- */
+  var opayWaited = false, opaySaid = false;
+
+  // After OPay redirects back (welder.html?opay=1) watch the payment book:
+  // OPay's server-to-server message is what switches the plan on.
+  function checkOpayResult() {
+    var ref = '';
+    try { ref = sessionStorage.getItem('opay_ref') || ''; } catch (e) {}
+    API.listPayments().then(function (rows) {
+      var hit = null;
+      rows = rows || [];
+      for (var i = 0; i < rows.length; i++) {
+        var p = rows[i];
+        if (ref && p.reference === ref) { hit = p; break; }
+        if (!ref && String(p.note || '').indexOf('OPay') !== -1) { hit = p; break; }
+      }
+      if (!hit) return;
+      if (hit.status === 'paid' && !opaySaid) {
+        opaySaid = true;
+        try { sessionStorage.removeItem('opay_ref'); } catch (e2) {}
+        toast('Payment confirmed - your ' + (hit.plan === 'featured' ? 'Featured' : 'Pro') + ' plan is on now!');
+        loadBoard();
+      } else if (hit.status === 'pending' && !opayWaited) {
+        opayWaited = true;
+        toast('OPay is confirming the money - your plan switches on by itself within a couple of minutes.');
+      }
+    }).catch(function () { /* not signed in yet - the later check will run */ });
+  }
+  if (/[?&]opay=1/.test(location.search)) {
+    try { history.replaceState(null, '', location.pathname + location.hash); } catch (e3) {}
+    setTimeout(checkOpayResult, 3000);
+    setTimeout(checkOpayResult, 12000);
+  }
+
+  // Tap Go Pro / Go Featured. With OPay switched on the welder pays on
+  // OPay's own secure page and the plan turns on by itself; otherwise he
+  // gets the workshop bank account to transfer to (owner approves).
+  function payFor(plan) {
+    if (plan !== 'pro' && plan !== 'featured') return;
+    if (cfg.OPAY_MERCHANT_ID) {
+      toast('Opening the OPay payment page...');
+      API.startOpayOrder(plan).then(function (r) {
+        if (r && r.cashierUrl) {
+          try { sessionStorage.setItem('opay_ref', r.reference || ''); } catch (e) {}
+          location.href = r.cashierUrl;
+          return;
+        }
+        if (r && r.error === 'not_configured') { showTransfer(plan); return; }
+        toast((r && r.error) || 'OPay could not start - use the bank transfer below.', true);
+        showTransfer(plan);
+      }).catch(function () {
+        toast('Could not reach OPay - use the bank transfer below instead.', true);
+        showTransfer(plan);
+      });
+      return;
+    }
+    showTransfer(plan);
+  }
+
+  function showTransfer(plan) {
+    var PR = cfg.PRICES_NGN || { pro: 2000, featured: 4000 };
+    var amt = PR[plan] || 0;
+    var bk = cfg.BANK || {};
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:70;background:rgba(20,18,16,.62);display:flex;align-items:center;justify-content:center;padding:16px';
+    overlay.innerHTML =
+      '<div style="background:#fff;border-radius:18px;max-width:420px;width:100%;padding:20px;max-height:92vh;overflow:auto">' +
+      '<h3 style="margin:0 0 4px">Pay for your ' + esc(plan === 'featured' ? 'Featured' : 'Pro') + ' plan</h3>' +
+      '<p class="hint" style="margin-top:0">Transfer exactly <b>&#8358;' + amt.toLocaleString('en-NG') +
+      '</b> to the workshop account below. Use your <b>name</b> as the transfer description, then tap <b>I have sent the money</b>.</p>' +
+      '<div style="border:1.5px dashed var(--line);border-radius:12px;padding:14px;margin:12px 0;background:#faf8f5">' +
+      '<div class="hint">Bank</div><div style="font-weight:700;font-size:16px">' + esc(bk.bank || '') + '</div>' +
+      '<div class="hint" style="margin-top:8px">Account number</div>' +
+      '<div style="font-size:24px;font-weight:800;letter-spacing:2px">' + esc(bk.number || '') + '</div>' +
+      '<div class="hint" style="margin-top:8px">Account name</div><div style="font-weight:700">' + esc(bk.holder || '') + '</div>' +
+      '</div>' +
+      '<div class="row"><button type="button" class="btn btn-quiet" id="payCopy">Copy number</button>' +
+      '<button type="button" class="btn btn-primary" id="paySent">I have sent the money</button></div>' +
+      '<button type="button" class="btn btn-quiet" id="payClose" style="width:100%;margin-top:8px">Close</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    function close() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+    overlay.querySelector('#payClose').addEventListener('click', close);
+    overlay.querySelector('#payCopy').addEventListener('click', function () {
+      var n = String(bk.number || '');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(n).then(function () { toast('Account number copied'); },
+          function () { toast('Could not copy. Long-press the number to copy it.', true); });
+      } else { toast('Long-press the number to copy it.'); }
+    });
+    overlay.querySelector('#paySent').addEventListener('click', function () {
+      var btn = this;
+      btn.disabled = true;
+      API.listPayments().then(function (rows) {
+        var dup = (rows || []).some(function (p) {
+          return p.plan === plan && !p.note && p.status !== 'failed';
+        });
+        if (dup) {
+          close();
+          toast('You already reported a payment for this plan. The workshop is checking it.');
+          return null;
+        }
+        return API.startPayment(plan).then(function (r) {
+          if (!r || r.error || !r.reference) throw new Error('Could not start the payment.');
+        }).then(function () {
+          close();
+          toast('Reported. Your plan switches on as soon as the workshop sees the money in the account.');
+          loadBoard();
+        });
+      }).catch(function (err) {
+        btn.disabled = false;
+        toast((err && err.message) || 'Could not report the payment. Check your internet and try again.', true);
+      });
     });
   }
 

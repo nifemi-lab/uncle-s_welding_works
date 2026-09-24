@@ -124,9 +124,14 @@
     // number from the website and claim their account.
     getWorkers: function () {
       if (demo) return Promise.resolve(load('demo_workers', DEMO_WORKERS).map(function (w) {
-        return { id: w.id, name: w.name, specialty: w.specialty, available: w.available, phone: w.phone };
+        return { id: w.id, name: w.name, specialty: w.specialty, available: w.available, phone: w.phone, plan: w.plan || 'free', paid_until: w.paid_until || null };
       }));
-      return sb.from('workers').select('id,name,specialty,available,phone').order('name').then(unwrap);
+      // plan/paid_until only exist once supabase-money.sql has been run;
+      // fall back to the older columns so the customer page never breaks.
+      return sb.from('workers').select('id,name,specialty,available,phone,plan,paid_until').order('name').then(unwrap)
+        .catch(function () {
+          return sb.from('workers').select('id,name,specialty,available,phone').order('name').then(unwrap);
+        });
     },
     getWorkersTeam: function () {
       if (demo) return Promise.resolve(load('demo_workers', DEMO_WORKERS).slice());
@@ -552,6 +557,88 @@
     saveSignupPhotos: function (urls) {
       if (demo) return Promise.resolve({ ok: true });
       return rpcStrict('save_signup_photos', { p_urls: urls || [] });
+    },
+
+    /* ---------- plans and payments ---------- */
+    // Ask the server to open an OPay checkout order for this plan.
+    // Resolves { reference, cashierUrl }, or { error } - "not_configured"
+    // means the OPay secrets are not set and the bank box should show.
+    startOpayOrder: function (plan) {
+      if (demo) return Promise.resolve({ error: 'not_configured' });
+      return sb.functions.invoke('opay-create-order', { body: { plan: plan } })
+        .then(function (r) {
+          if (r && r.data) return r.data;
+          if (r && r.error) return { error: 'the payment service did not answer' };
+          return { error: 'no reply' };
+        });
+    },
+    // Opens the payment book: the database writes the row and the price,
+    // so the website cannot charge a wrong amount.
+    startPayment: function (plan) {
+      if (demo) {
+        var amt = plan === 'featured' ? 400000 : 200000;
+        var ref = 'UW-DEMO' + Math.random().toString(36).slice(2, 8).toUpperCase();
+        var list = load('demo_payments', []);
+        list.push({
+          id: ref, worker_id: (load('demo_workers', DEMO_WORKERS)[0] || {}).id,
+          email: 'demo@welder.local', plan: plan, amount_kobo: amt,
+          reference: ref, status: 'pending', created_at: new Date().toISOString()
+        });
+        save('demo_payments', list);
+        return Promise.resolve({ reference: ref, amount_kobo: amt });
+      }
+      return rpcStrict('start_payment', { p_plan: plan });
+    },
+    listPayments: function () {
+      if (demo) return Promise.resolve(load('demo_payments', []).slice().reverse());
+      return sb.from('payments').select('*').order('created_at', { ascending: false }).then(unwrap);
+    },
+    updatePayment: function (id, patch) {
+      if (demo) {
+        var l = load('demo_payments', []);
+        l.forEach(function (p) {
+          if (p.id === id) Object.keys(patch).forEach(function (k) { p[k] = patch[k]; });
+        });
+        save('demo_payments', l);
+        return Promise.resolve({ ok: true });
+      }
+      return sb.from('payments').update(patch).eq('id', id).then(check).then(function () { return { ok: true }; });
+    },
+    // The owner ticks a payment off in the Money tab: the plan goes live.
+    approvePayment: function (id) {
+      if (demo) {
+        var list = load('demo_payments', []), hit = null;
+        for (var i = 0; i < list.length; i++) if (list[i].id === id) { hit = list[i]; break; }
+        if (!hit) return Promise.resolve({ error: 'not found' });
+        hit.status = 'paid';
+        hit.confirmed_at = new Date().toISOString();
+        hit.note = 'approved by owner';
+        var ws = load('demo_workers', DEMO_WORKERS);
+        ws.forEach(function (w) {
+          if (w.id === hit.worker_id) {
+            w.plan = hit.plan;
+            w.paid_until = new Date(Date.now() + 30 * 86400000).toISOString();
+          }
+        });
+        save('demo_workers', ws); save('demo_payments', list);
+        return Promise.resolve({ ok: true, plan: hit.plan });
+      }
+      return rpcStrict('approve_payment', { p_id: id });
+    },
+    // Switch a welder's plan by hand from the owner's Welders tab.
+    setWorkerPlan: function (id, plan) {
+      if (demo) {
+        var ws = load('demo_workers', DEMO_WORKERS);
+        ws.forEach(function (w) {
+          if (w.id === id) {
+            w.plan = plan;
+            w.paid_until = plan === 'free' ? null : new Date(Date.now() + 30 * 86400000).toISOString();
+          }
+        });
+        save('demo_workers', ws);
+        return Promise.resolve({ ok: true, plan: plan });
+      }
+      return rpcStrict('set_worker_plan', { p_worker: id, p_plan: plan });
     }
   };
 

@@ -21,13 +21,22 @@
 .lead{color:var(--muted);max-width:56ch;margin:0 0 28px}
 
 .top{position:sticky;top:0;z-index:20;background:var(--char);color:#fff;border-bottom:3px solid var(--spark)}
-.top .in{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px}
+.top .in{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;position:relative}
 .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-head);font-size:25px;font-weight:600;color:#fff;text-decoration:none;line-height:1}
 .brand i{display:grid;place-items:center;width:34px;height:34px;background:var(--spark-strong);border-radius:5px;font-size:20px}
 .nav{display:flex;align-items:center;gap:22px}
 .nav a.l{color:#e9e3dc;text-decoration:none;font-weight:500}
 .nav a.l:hover{color:#fff;text-decoration:underline}
-@media (max-width:760px){.nav a.l{display:none}}
+.burger{display:none;align-items:center;justify-content:center;width:44px;height:44px;background:none;border:1.5px solid #4a4643;border-radius:var(--radius);color:#fff;font-size:26px;line-height:1;cursor:pointer}
+.burger:hover{border-color:var(--spark)}
+.sec{scroll-margin-top:70px}
+@media (max-width:760px){
+  .burger{display:flex}
+  .nav{position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:var(--char);border-bottom:3px solid var(--spark);max-height:0;overflow:hidden;transition:max-height .28s ease}
+  .nav.open{max-height:340px;box-shadow:0 12px 24px rgba(0,0,0,.28)}
+  .nav a.l{display:block;padding:15px 20px;border-top:1px solid #3a3735;font-size:18px}
+  .nav #topWa{margin:14px 20px 18px;justify-content:center}
+}
 
 .hero{background:var(--char);color:#fff;position:relative;overflow:hidden}
 .hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(#3a3735 2px,transparent 2px),linear-gradient(90deg,#3a3735 2px,transparent 2px);background-size:30px 30px;-webkit-mask-image:linear-gradient(90deg,transparent 25%,#000);mask-image:linear-gradient(90deg,transparent 25%,#000);opacity:.75}
@@ -114,7 +123,8 @@ footer a{color:#d2cac1}
 <header class="top">
   <div class="in">
     <a class="brand" href="#top"><i class="ti ti-flame" aria-hidden="true"></i><span data-biz>Welding Works</span></a>
-    <nav class="nav" aria-label="Main">
+    <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="nav"><i class="ti ti-menu-2" aria-hidden="true"></i></button>
+    <nav class="nav" id="nav" aria-label="Main">
       <a class="l" href="#services">What we build</a>
       <a class="l" href="#work">Our work</a>
       <a class="l" href="#build">Request a build</a>
@@ -149,7 +159,7 @@ footer a{color:#d2cac1}
   </div>
 </section>
 
-<section class="sec" id="work" style="padding-top:8px">
+<section class="sec" id="work" style="padding-top:0">
   <div class="wrap">
     <h2>Our work</h2>
     <p class="lead">A few jobs we've finished.</p>
@@ -227,6 +237,19 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').ca
   $('#fHours').textContent = cfg.HOURS || '';
   $('#topWa').href = 'https://wa.me/' + API.toIntl(cfg.FALLBACK_WHATSAPP) + '?text=' + encodeURIComponent('Hello, I have a question about a build.');
   if (API.demo) $('#demoNote').hidden = false;
+
+  /* ---------- mobile menu ---------- */
+  (function () {
+    var burger = $('#burger'), nav = $('#nav');
+    function setOpen(open) {
+      nav.classList.toggle('open', open);
+      burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      burger.querySelector('i').className = open ? 'ti ti-x' : 'ti ti-menu-2';
+    }
+    burger.addEventListener('click', function () { setOpen(!nav.classList.contains('open')); });
+    nav.addEventListener('click', function (e) { if (e.target.closest('a')) setOpen(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
+  })();
 
   /* ---------- gallery ---------- */
   (function () {
